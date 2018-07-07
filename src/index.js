@@ -1,4 +1,7 @@
-import { Context } from './vektar';
+//import { Context } from 'vektar';
+// TODO: Currently expecting vektar to be available locally to speed
+// development
+import { Context } from '../lib/vektar/src/index';
 import { Game } from './game';
 import { ship, radarBuilding, planet } from './primitives';
 
