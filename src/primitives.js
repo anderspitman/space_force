@@ -1,5 +1,5 @@
 export const ship = {
-  id: 'ship',
+  primitiveId: 'ship',
   create: function() {
 
     this.setAnchor({ x: 10, y: 10 })
@@ -58,7 +58,7 @@ export const ship = {
 };
 
 export const radarBuilding = { 
-  id: 'radar-building',
+  primitiveId: 'radar-building',
   create: function() {
 
     const group = this.ctx.createGroup()
@@ -91,7 +91,7 @@ export const radarBuilding = {
 };
 
 export const planet = {
-  id: 'planet',
+  primitiveId: 'planet',
   create: function() {
     const planet = this.ctx.createGroup()
     const circle = this.ctx.createCircle()

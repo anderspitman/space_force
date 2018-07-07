@@ -42,13 +42,13 @@ const playerShip = {
 
 const scene = [
   {
-    primitiveId: 'ship',
+    primitiveId: ship.primitiveId,
     instances: [
       playerShip 
     ]
   },
   {
-    primitiveId: 'planet',
+    primitiveId: planet.primitiveId,
     instances: [
       {
         x: 1000,
