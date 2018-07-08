@@ -3,7 +3,12 @@
 // development
 import { Context } from '../lib/vektar/src/index';
 import { Game } from './game';
-import { shipPrimitive, ship, radarBuilding, planet } from './primitives';
+import {
+  shipPrimitive,
+  planetDescriptor,
+  radarBuilding,
+  planet
+} from './primitives';
 import { PhysicsEngine } from './physics';
 import { Camera } from './camera';
 
@@ -21,6 +26,10 @@ const game = new Game();
 const playerShip = {
   x: 1200,
   y: 1200,
+  position: {
+    x: 1200,
+    y: 1200,
+  },
   rotationDegrees: 0,
   scale: 1.0,
   color: team1Color,
@@ -49,6 +58,10 @@ const player2Ship = {
 const planet1 = {
   x: 1000,
   y: 1000,
+  position: {
+    x: 1000,
+    y: 1000,
+  },
   rotationDegrees: 0,
   scale: 1.0,
   showBuilding: true,
@@ -59,6 +72,10 @@ const planet1 = {
 const planet2 = {
   x: 1300,
   y: 1300,
+  position: {
+    x: 1300,
+    y: 1300,
+  },
   rotationDegrees: 0,
   scale: 1.0,
   showBuilding: true,
@@ -81,7 +98,7 @@ const scene = [
     ]
   },
   {
-    primitiveId: planet.primitiveId,
+    primitiveId: 'Planet',
     instances: [
       planet1,
       planet2,
@@ -100,10 +117,13 @@ const ctx = new Context({
   }
 });
 
-ctx.registerPrimitive(ship);
 ctx.definePrimitive({ primitiveId: 'Ship', descriptor: shipPrimitive });
-ctx.registerPrimitive(radarBuilding);
-ctx.registerPrimitive(planet);
+ctx.definePrimitive({
+  primitiveId: 'RadarBuilding',
+  descriptor: planetDescriptor
+});
+ctx.definePrimitive({ primitiveId: 'Planet', descriptor: planetDescriptor });
+
 ctx.setBackgroundColor('black');
 
 // handle keyboard input
@@ -131,8 +151,6 @@ physics.add(planet2)
   .setMass(200)
   .setPositioning('static')
 
-console.log(physics.objs);
-
 function step() {
   //ctx.setViewportPosition({ x: cameraX, y: cameraY });
   //cameraX += 1;
@@ -155,8 +173,6 @@ function step() {
   const rotationRadians = adjustedRotation * DEGREES_TO_RADIANS;
   const rotationX = Math.cos(rotationRadians);
   const rotationY = Math.sin(rotationRadians);
-  //console.log(rotationRadians);
-  //console.log(x, y);
 
   if (playerShip.thrustersOn) {
     playerShip.velocity.x += rotationX * thrustAcceleration;
@@ -165,6 +181,9 @@ function step() {
 
   playerShip.x += playerShip.velocity.x;
   playerShip.y += playerShip.velocity.y;
+
+  playerShip.position.x += playerShip.velocity.x;
+  playerShip.position.y += playerShip.velocity.y;
 
   camera.setCenterPosition({ x: playerShip.x, y: playerShip.y });
 
