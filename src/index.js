@@ -3,12 +3,7 @@
 // development
 import { Context } from '../lib/vektar/src/index';
 import { Game } from './game';
-import {
-  shipPrimitive,
-  planetDescriptor,
-  radarBuilding,
-  planet
-} from './primitives';
+import { shipDescriptor, planetDescriptor } from './primitives';
 import { PhysicsEngine } from './physics';
 import { Camera } from './camera';
 
@@ -24,8 +19,6 @@ const DEGREES_TO_RADIANS = Math.PI / 180;
 const game = new Game();
 
 const playerShip = {
-  x: 1200,
-  y: 1200,
   position: {
     x: 1200,
     y: 1200,
@@ -41,23 +34,7 @@ const playerShip = {
   thrustersOn: false,
 };
 
-const player2Ship = {
-  x: 1100,
-  y: 1100,
-  rotationDegrees: 0,
-  scale: 1.0,
-  color: team1Color,
-  initialRotationDegrees: -90,
-  velocity: {
-    x: 0,
-    y: 0,
-  },
-  thrustersOn: false,
-};
-
 const planet1 = {
-  x: 1000,
-  y: 1000,
   position: {
     x: 1000,
     y: 1000,
@@ -70,8 +47,6 @@ const planet1 = {
 };
 
 const planet2 = {
-  x: 1300,
-  y: 1300,
   position: {
     x: 1300,
     y: 1300,
@@ -84,14 +59,7 @@ const planet2 = {
 };
 
 const scene = [
-  //{
-  //  primitiveId: 'Ship',
-  //  instances: [
-  //    player2Ship
-  //  ]
-  //},
   {
-    //primitiveId: ship.primitiveId,
     primitiveId: 'Ship',
     instances: [
       playerShip 
@@ -117,7 +85,7 @@ const ctx = new Context({
   }
 });
 
-ctx.definePrimitive({ primitiveId: 'Ship', descriptor: shipPrimitive });
+ctx.definePrimitive({ primitiveId: 'Ship', descriptor: shipDescriptor });
 ctx.definePrimitive({
   primitiveId: 'RadarBuilding',
   descriptor: planetDescriptor
@@ -152,10 +120,7 @@ physics.add(planet2)
   .setPositioning('static')
 
 function step() {
-  //ctx.setViewportPosition({ x: cameraX, y: cameraY });
-  //cameraX += 1;
-  //cameraY += 1;
-  //
+
   const rotationStep = 5.0;
   const thrustAcceleration = 0.1;
 
@@ -179,13 +144,10 @@ function step() {
     playerShip.velocity.y += rotationY * thrustAcceleration;
   }
 
-  playerShip.x += playerShip.velocity.x;
-  playerShip.y += playerShip.velocity.y;
-
   playerShip.position.x += playerShip.velocity.x;
   playerShip.position.y += playerShip.velocity.y;
 
-  camera.setCenterPosition({ x: playerShip.x, y: playerShip.y });
+  camera.setCenterPosition(playerShip.position);
 
   physics.tick();
 

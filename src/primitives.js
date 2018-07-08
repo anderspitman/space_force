@@ -1,4 +1,4 @@
-export const shipPrimitive = {
+export const shipDescriptor = {
   type: 'Group',
   position: '%position',
   rotationDegrees: '%rotationDegrees',

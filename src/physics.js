@@ -44,8 +44,8 @@ export class PhysicsEngine {
       if (physicsObj.positioning === 'dynamic') {
         for (let other of this.objs) {
           if (other.positioning === 'static') {
-            const thisPos = new Vector2({ x: obj.x, y: obj.y });
-            const otherPos = new Vector2({ x: other.obj.x, y: other.obj.y });
+            const thisPos = new Vector2(obj.position);
+            const otherPos = new Vector2(other.obj.position);
             const diff = otherPos.subtract(thisPos);
             const accelDir = diff.normalized();
 
