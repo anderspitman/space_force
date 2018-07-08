@@ -1,3 +1,59 @@
+export const shipPrimitive = {
+  type: 'Group',
+  anchor: {
+    x: 10,
+    y: 10,
+  },
+  children: [
+    {
+      id: 'main-body',
+      type: 'Triangle',
+      width: 20,
+      height: 20,
+      position: {
+        x: 2,
+        y: 20,
+      },
+      vertices: {
+        vertex1: { x: 0.5, y: 0 },
+        vertex2: { x: 1, y: 1 },
+        vertex3: { x: 0, y: 1 },
+      },
+      strokeColor: '%color',
+    },
+    {
+      id: 'left-thruster',
+      type: 'Triangle',
+      width: 4,
+      height: 4,
+      position: {
+        x: 15,
+        y: 20,
+      },
+      vertices: {
+        vertex1: { x: 0, y: 0 },
+        vertex2: { x: 1, y: 0 },
+        vertex3: { x: 0.5, y: 1 },
+      },
+      strokeColor: '#23fbff',
+      visible: '%thrustersOn',
+    },
+    {
+      id: 'right-thruster',
+      type: 'Triangle',
+      width: 4,
+      height: 4,
+      vertices: {
+        vertex1: { x: 0, y: 0 },
+        vertex2: { x: 1, y: 0 },
+        vertex3: { x: 0.5, y: 1 },
+      },
+      strokeColor: '#23fbff',
+      visible: '%thrustersOn',
+    }
+  ],
+};
+
 export const ship = {
   primitiveId: 'ship',
   create: function() {

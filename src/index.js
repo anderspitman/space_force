@@ -3,7 +3,7 @@
 // development
 import { Context } from '../lib/vektar/src/index';
 import { Game } from './game';
-import { ship, radarBuilding, planet } from './primitives';
+import { shipPrimitive, ship, radarBuilding, planet } from './primitives';
 import { PhysicsEngine } from './physics';
 import { Camera } from './camera';
 
@@ -28,7 +28,22 @@ const playerShip = {
   velocity: {
     x: 0,
     y: 0,
-  }
+  },
+  thrustersOn: false,
+};
+
+const player2Ship = {
+  x: 1100,
+  y: 1100,
+  rotationDegrees: 0,
+  scale: 1.0,
+  color: team1Color,
+  initialRotationDegrees: -90,
+  velocity: {
+    x: 0,
+    y: 0,
+  },
+  thrustersOn: false,
 };
 
 const planet1 = {
@@ -52,8 +67,15 @@ const planet2 = {
 };
 
 const scene = [
+  //{
+  //  primitiveId: 'Ship',
+  //  instances: [
+  //    player2Ship
+  //  ]
+  //},
   {
-    primitiveId: ship.primitiveId,
+    //primitiveId: ship.primitiveId,
+    primitiveId: 'Ship',
     instances: [
       playerShip 
     ]
@@ -79,6 +101,7 @@ const ctx = new Context({
 });
 
 ctx.registerPrimitive(ship);
+ctx.definePrimitive({ primitiveId: 'Ship', descriptor: shipPrimitive });
 ctx.registerPrimitive(radarBuilding);
 ctx.registerPrimitive(planet);
 ctx.setBackgroundColor('black');
