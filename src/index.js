@@ -123,10 +123,42 @@ physics.add(planet2)
 const bbox = physics.calculateBoundingBox(shipDescriptor);
 console.log(bbox);
 
+var gamepads = {};
+
+function gamepadHandler(event, connecting) {
+  var gamepad = event.gamepad;
+  // Note:
+  // gamepad === navigator.getGamepads()[gamepad.index]
+
+  if (connecting) {
+    gamepads[gamepad.index] = gamepad;
+  } else {
+    delete gamepads[gamepad.index];
+  }
+}
+
+window.addEventListener("gamepadconnected", function(e) { gamepadHandler(e, true); }, false);
+window.addEventListener("gamepaddisconnected", function(e) { gamepadHandler(e, false); }, false);
+
+const LEFT_ANALOG_X_INDEX = 0;
+const RIGHT_ANALOG_Y_INDEX = 3;
+
 function step() {
 
   const rotationStep = 5.0;
   const thrustAcceleration = 0.1;
+
+  let rotation = 0.0;
+  let thrust = 0.0;
+
+  const gp = gamepads[0];
+
+  if (gp) {
+    rotation = gp.axes[LEFT_ANALOG_X_INDEX] * rotationStep;
+    thrust = -gp.axes[RIGHT_ANALOG_Y_INDEX] * thrustAcceleration;
+  }
+
+  playerShip.rotationDegrees += rotation;
 
   if (keys[KEY_LEFT]) {
     playerShip.rotationDegrees -= rotationStep;
@@ -134,7 +166,8 @@ function step() {
   else if (keys[KEY_RIGHT]) {
     playerShip.rotationDegrees += rotationStep;
   }
-  playerShip.thrustersOn = keys[KEY_UP];
+
+  playerShip.thrustersOn = keys[KEY_UP] || Math.abs(thrust) > 0.001;
 
   // movement
   const adjustedRotation =
@@ -146,6 +179,11 @@ function step() {
   if (playerShip.thrustersOn) {
     playerShip.velocity.x += rotationX * thrustAcceleration;
     playerShip.velocity.y += rotationY * thrustAcceleration;
+  }
+
+  if (Math.abs(thrust) > 0.001) {
+    playerShip.velocity.x += rotationX * thrust;
+    playerShip.velocity.y += rotationY * thrust;
   }
 
   playerShip.position.x += playerShip.velocity.x;

@@ -3,13 +3,13 @@ export const shipDescriptor = {
   position: '%position',
   rotationDegrees: '%rotationDegrees',
   children: [
-    {
-      id: 'center-marker',
-      type: 'Circle',
-      radius: 5,
-      strokeColor: 'red',
-      fillColor: 'red',
-    },
+    //{
+    //  id: 'center-marker',
+    //  type: 'Circle',
+    //  radius: 5,
+    //  strokeColor: 'red',
+    //  fillColor: 'red',
+    //},
     {
       id: 'main-body',
       type: 'Triangle',
