@@ -112,12 +112,16 @@ physics.add(playerShip)
   .setPositioning('dynamic')
 
 physics.add(planet1)
-  .setMass(100)
+  .setMass(400)
   .setPositioning('static')
 
 physics.add(planet2)
   .setMass(200)
   .setPositioning('static')
+
+//const bbox = physics.calculateBoundingBox(planetDescriptor);
+const bbox = physics.calculateBoundingBox(shipDescriptor);
+console.log(bbox);
 
 function step() {
 

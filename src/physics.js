@@ -68,6 +68,85 @@ export class PhysicsEngine {
 
     //const tickDuration = timeNowSeconds() - timeStartTick;
     //console.log(tickDuration);
+    //console.log(timeElapsed);
+  }
+
+  calculateBoundingBox(descriptor) {
+    const bbox =
+      new BoundingBoxCalculator().calculateBoundingBox(descriptor);
+
+    return bbox;
+  }
+}
+
+class BoundingBoxCalculator {
+
+  constructor() {
+    this.xMin = 0;
+    this.xMax = 0;
+    this.yMin = 0;
+    this.yMax = 0;
+  }
+
+  calculateBoundingBox(descriptor) {
+    this.updateBoundingBox(descriptor);
+    return {
+      xMin: this.xMin,
+      xMax: this.xMax,
+      yMin: this.yMin,
+      yMax: this.yMax,
+    };
+  }
+
+  updateBoundingBox(descriptor) {
+
+    let xTrans = 0;
+    let yTrans = 0;
+    if (descriptor.position !== undefined &&
+        typeof descriptor.position !== 'string') {
+      xTrans = descriptor.position.x;
+      yTrans = descriptor.position.y;
+    }
+
+    switch (descriptor.type) {
+      case 'Group':
+
+        for (let childDescriptor of descriptor.children) {
+          const child = this.updateBoundingBox(childDescriptor);
+        }
+
+        break;
+      case 'Triangle':
+
+        for (let key in descriptor.vertices) {
+          const vertex = descriptor.vertices[key];
+          const x = vertex.x + xTrans;
+          const y = vertex.y + yTrans;
+
+          if (x < this.xMin) {
+            this.xMin = x;
+          }
+          if (x > this.xMax) {
+            this.xMax = x;
+          }
+
+          if (y < this.yMin) {
+            this.yMin = y;
+          }
+          if (y > this.yMax) {
+            this.yMax = y;
+          }
+        }
+
+        break;
+      case 'Circle':
+        break;
+      case 'Rectangle':
+        break;
+      default:
+        throw "Invalid type " + type;
+        break;
+    }
   }
 }
 
