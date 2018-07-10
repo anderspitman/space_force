@@ -1,9 +1,14 @@
 //import { Context } from 'vektar';
 // TODO: Currently expecting vektar to be available locally to speed
 // development
+import { Vector2 } from './math';
 import { Context } from '../lib/vektar/src/index';
 import { Game } from './game';
-import { shipDescriptor, planetDescriptor } from './primitives';
+import {
+  shipDescriptor,
+  planetDescriptor,
+  boundingAreaDescriptor
+} from './primitives';
 import { PhysicsEngine } from './physics';
 import { Camera } from './camera';
 
@@ -17,6 +22,24 @@ const KEY_UP = 38;
 const DEGREES_TO_RADIANS = Math.PI / 180;
 
 const game = new Game();
+
+const boundingArea = {
+  position: {
+    x: 0,
+    y: 0,
+  },
+  width: 10,
+  height: 10,
+};
+
+const planetBound = {
+  position: {
+    x: 0,
+    y: 0,
+  },
+  width: 10,
+  height: 10,
+};
 
 const playerShip = {
   position: {
@@ -72,6 +95,13 @@ const scene = [
       planet2,
     ],
   },
+  {
+    primitiveId: 'BoundingArea',
+    instances: [
+      boundingArea,
+      planetBound
+    ]
+  },
 ];
 
 const worldWidth = 10000;
@@ -91,6 +121,10 @@ ctx.definePrimitive({
   descriptor: planetDescriptor
 });
 ctx.definePrimitive({ primitiveId: 'Planet', descriptor: planetDescriptor });
+ctx.definePrimitive({
+  primitiveId: 'BoundingArea',
+  descriptor: boundingAreaDescriptor 
+});
 
 ctx.setBackgroundColor('black');
 
@@ -119,9 +153,25 @@ physics.add(planet2)
   .setMass(200)
   .setPositioning('static')
 
-//const bbox = physics.calculateBoundingBox(planetDescriptor);
-const bbox = physics.calculateBoundingBox(shipDescriptor);
+const bbox = physics.calculateBoundingArea(shipDescriptor);
+const bboxPlanet  = physics.calculateBoundingArea(planetDescriptor);
 console.log(bbox);
+console.log(bboxPlanet);
+
+planetBound.width = bboxPlanet.xMax - bboxPlanet.xMin;
+planetBound.height = bboxPlanet.yMax - bboxPlanet.yMin;
+planetBound.radius = bboxPlanet.radius;
+planetBound.circlePosition = {
+  x: bboxPlanet.xMax,
+  y: bboxPlanet.yMin,
+};
+planetBound.position.x = planet1.position.x + bboxPlanet.xMin;
+planetBound.position.y = planet1.position.y + bboxPlanet.yMax;
+planetBound.rotationDegrees = planet1.rotationDegrees;
+planetBound.anchor = {
+  x: -bboxPlanet.xMin,
+  y: bboxPlanet.yMax,
+};
 
 var gamepads = {};
 
@@ -188,6 +238,35 @@ function step() {
 
   playerShip.position.x += playerShip.velocity.x;
   playerShip.position.y += playerShip.velocity.y;
+
+  boundingArea.width = bbox.xMax - bbox.xMin;
+  boundingArea.height = bbox.yMax - bbox.yMin;
+  boundingArea.radius = bbox.radius;
+  boundingArea.circlePosition = {
+    x: bbox.xMax,
+    y: bbox.yMin,
+  };
+  boundingArea.position.x = playerShip.position.x + bbox.xMin;
+  boundingArea.position.y = playerShip.position.y + bbox.yMax;
+  boundingArea.rotationDegrees = playerShip.rotationDegrees;
+  boundingArea.anchor = {
+    x: -bbox.xMin,
+    y: bbox.yMax,
+  };
+
+  const shipPos = new Vector2(playerShip.position);
+  const planetPos = new Vector2(planet1.position);
+
+  const distance = shipPos.disanceTo(planetPos);
+
+  if (distance < bbox.radius + bboxPlanet.radius) {
+    console.log("colliding");
+    playerShip.position.x = 0;
+    playerShip.position.y = 0;
+    playerShip.velocity.x = 0;
+    playerShip.velocity.y = 0;
+  }
+
 
   camera.setCenterPosition(playerShip.position);
   //camera.setCenterPosition({ x: 0, y: 0 });

@@ -1,3 +1,26 @@
+export const boundingAreaDescriptor = {
+  type: 'Group',
+  position: '%position',
+  anchor: '%anchor',
+  rotationDegrees: '%rotationDegrees',
+  children: [
+    {
+      type: 'Rectangle',
+      width: '%width',
+      height: '%height',
+      strokeColor: 'red',
+      fillColor: 'none',
+    },
+    {
+      type: 'Circle',
+      position: '%circlePosition',
+      radius: '%radius',
+      strokeColor: 'red',
+      fillColor: 'none',
+    }
+  ]
+};
+
 export const shipDescriptor = {
   type: 'Group',
   position: '%position',

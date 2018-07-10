@@ -71,9 +71,9 @@ export class PhysicsEngine {
     //console.log(timeElapsed);
   }
 
-  calculateBoundingBox(descriptor) {
+  calculateBoundingArea(descriptor) {
     const bbox =
-      new BoundingBoxCalculator().calculateBoundingBox(descriptor);
+      new BoundingBoxCalculator().calculateBoundingArea(descriptor);
 
     return bbox;
   }
@@ -88,13 +88,18 @@ class BoundingBoxCalculator {
     this.yMax = 0;
   }
 
-  calculateBoundingBox(descriptor) {
+  calculateBoundingArea(descriptor) {
     this.updateBoundingBox(descriptor);
+    const radius = Math.max(
+      Math.abs(this.xMin), Math.abs(this.xMax), Math.abs(this.yMin),
+      Math.abs(this.yMax));
+
     return {
       xMin: this.xMin,
       xMax: this.xMax,
       yMin: this.yMin,
       yMax: this.yMax,
+      radius 
     };
   }
 
@@ -129,7 +134,6 @@ class BoundingBoxCalculator {
           if (x > this.xMax) {
             this.xMax = x;
           }
-
           if (y < this.yMin) {
             this.yMin = y;
           }
@@ -140,6 +144,28 @@ class BoundingBoxCalculator {
 
         break;
       case 'Circle':
+
+        const centerX = xTrans;
+        const centerY = yTrans;
+        const radius = descriptor.radius;
+        const leftPoint = centerX - radius;
+        const rightPoint = centerX + radius;
+        const topPoint = centerY + radius;
+        const bottomPoint = centerY - radius;
+
+        if (leftPoint < this.xMin) {
+          this.xMin = leftPoint;
+        }
+        if (rightPoint > this.xMax) {
+          this.xMax = rightPoint;
+        }
+        if (bottomPoint < this.yMin) {
+          this.yMin = bottomPoint;
+        }
+        if (topPoint > this.yMax) {
+          this.yMax = topPoint;
+        }
+
         break;
       case 'Rectangle':
         break;
