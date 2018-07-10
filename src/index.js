@@ -20,13 +20,13 @@ const game = new Game();
 
 const playerShip = {
   position: {
-    x: 1200,
-    y: 1200,
+    x: 0,
+    y: 0,
   },
   rotationDegrees: 0,
   scale: 1.0,
   color: team1Color,
-  initialRotationDegrees: -90,
+  initialRotationDegrees: 90,
   velocity: {
     x: 0,
     y: 0,
@@ -36,8 +36,8 @@ const playerShip = {
 
 const planet1 = {
   position: {
-    x: 1000,
-    y: 1000,
+    x: 200,
+    y: 200,
   },
   rotationDegrees: 0,
   scale: 1.0,
@@ -48,8 +48,8 @@ const planet1 = {
 
 const planet2 = {
   position: {
-    x: 1300,
-    y: 1300,
+    x: 500,
+    y: 500,
   },
   rotationDegrees: 0,
   scale: 1.0,
@@ -161,10 +161,10 @@ function step() {
   playerShip.rotationDegrees += rotation;
 
   if (keys[KEY_LEFT]) {
-    playerShip.rotationDegrees -= rotationStep;
+    playerShip.rotationDegrees += rotationStep;
   }
   else if (keys[KEY_RIGHT]) {
-    playerShip.rotationDegrees += rotationStep;
+    playerShip.rotationDegrees -= rotationStep;
   }
 
   playerShip.thrustersOn = keys[KEY_UP] || Math.abs(thrust) > 0.001;
@@ -190,6 +190,7 @@ function step() {
   playerShip.position.y += playerShip.velocity.y;
 
   camera.setCenterPosition(playerShip.position);
+  //camera.setCenterPosition({ x: 0, y: 0 });
 
   physics.tick();
 

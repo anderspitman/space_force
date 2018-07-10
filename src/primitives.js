@@ -28,7 +28,7 @@ export const shipDescriptor = {
       type: 'Triangle',
       position: {
         x: -5,
-        y: 10,
+        y: -10,
       },
       vertices: {
         vertex1: { x: -2, y: 0 },
@@ -44,7 +44,7 @@ export const shipDescriptor = {
       type: 'Triangle',
       position: {
         x: 5,
-        y: 10,
+        y: -10,
       },
       vertices: {
         vertex1: { x: -2, y: 0 },
@@ -74,7 +74,7 @@ export const planetDescriptor = {
       height: 10,
       position: {
         x: -5,
-        y: -5,
+        y: 5,
       },
       fillColor: '%color',
     },
@@ -85,7 +85,7 @@ export const planetDescriptor = {
       height: 40,
       position: {
         x: -20,
-        y: -20,
+        y: 20,
       },
       strokeColor: '%color',
       fillColor: 'none',
@@ -97,7 +97,7 @@ export const planetDescriptor = {
       height: 80,
       position: {
         x: -70,
-        y: -40,
+        y: 40,
       },
       strokeColor: '%color',
       fillColor: 'none',
@@ -109,7 +109,7 @@ export const planetDescriptor = {
       height: 30,
       position: {
         x: 0,
-        y: -70,
+        y: 70,
       },
       strokeColor: '%color',
       fillColor: 'none',
@@ -120,7 +120,7 @@ export const planetDescriptor = {
       type: 'Group',
       position: {
         x: 0,
-        y: 40,
+        y: -40,
       },
       children: [
         {
@@ -138,12 +138,12 @@ export const planetDescriptor = {
           height: 30,
           position: {
             x: 30,
-            y: -20,
+            y: 20,
           },
           vertices: {
             vertex1: { x: 0, y: 0 },
-            vertex2: { x: 1, y: 1 },
-            vertex3: { x: 0.3, y: 0.7 },
+            vertex2: { x: 30, y: -30 },
+            vertex3: { x: 10, y: -20 },
           },
           strokeColor: '%color',
           fillColor: 'none',
