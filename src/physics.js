@@ -1,6 +1,4 @@
-import { Vector2 } from './math';
-
-const DEGREES_TO_RADIANS = Math.PI / 180;
+import { Vector2, unitVectorForAngleDegrees } from './math';
 
 class PhysicsObject {
   static create(obj) {
@@ -12,6 +10,9 @@ class PhysicsObject {
   constructor({ id, obj }) {
     this.id = id;
     this.obj = obj;
+
+    this.positioning = 'dynamic';
+    this.hasGravity = true;
   }
 
   getId() {
@@ -28,6 +29,11 @@ class PhysicsObject {
     return this;
   }
 
+  setHasGravity(value) {
+    this.hasGravity = value;
+    return this;
+  }
+
   setPositioning(value) {
     this.positioning = value;
     return this;
@@ -36,11 +42,9 @@ class PhysicsObject {
   accelerateForward(acceleration) {
     const adjustedRotation =
       this.obj.rotationDegrees + this.obj.initialRotationDegrees;
-    const rotationRadians = adjustedRotation * DEGREES_TO_RADIANS;
-    const rotationX = Math.cos(rotationRadians);
-    const rotationY = Math.sin(rotationRadians);
-    this.obj.velocity.x += rotationX * acceleration;
-    this.obj.velocity.y += rotationY * acceleration;
+    const unitVelocity = unitVectorForAngleDegrees(adjustedRotation);
+    this.obj.velocity.x += unitVelocity.x * acceleration;
+    this.obj.velocity.y += unitVelocity.y * acceleration;
   }
 }
 PhysicsObject.nextId = 0;
@@ -106,9 +110,6 @@ export class PhysicsEngine {
     const timeElapsed = timeStartTick - this.timeLastTick;
     this.timeLastTick = timeStartTick;
 
-    let gravityAcceleration = new Vector2({ x: 0, y: 0 });
-
-
     for (let physicsObj of this.objs) {
       
       const obj = physicsObj.obj;
@@ -119,27 +120,32 @@ export class PhysicsEngine {
         obj.position.x += obj.velocity.x;
         obj.position.y += obj.velocity.y;
 
-        // apply gravity
-        for (let other of this.objs) {
-          if (other.positioning === 'static') {
-            const thisPos = new Vector2(obj.position);
-            const otherPos = new Vector2(other.obj.position);
-            const diff = otherPos.subtract(thisPos);
-            const accelDir = diff.normalized();
+        if (physicsObj.hasGravity) {
 
-            const accelForce = gravityForce({
-              mass1: physicsObj.mass,
-              mass2: other.mass,
-              radius: diff.getLength()
-            });
+          let gravityAcceleration = new Vector2({ x: 0, y: 0 });
 
-            const accel = accelDir.scaledBy(accelForce);
-            gravityAcceleration = gravityAcceleration.add(accel);
+          // apply gravity
+          for (let other of this.objs) {
+            if (other.positioning === 'static') {
+              const thisPos = new Vector2(obj.position);
+              const otherPos = new Vector2(other.obj.position);
+              const diff = otherPos.subtract(thisPos);
+              const accelDir = diff.normalized();
+
+              const accelForce = gravityForce({
+                mass1: physicsObj.mass,
+                mass2: other.mass,
+                radius: diff.getLength()
+              });
+
+              const accel = accelDir.scaledBy(accelForce);
+              gravityAcceleration = gravityAcceleration.add(accel);
+            }
           }
-        }
 
-        obj.velocity.x += gravityAcceleration.x;
-        obj.velocity.y += gravityAcceleration.y;
+          obj.velocity.x += gravityAcceleration.x;
+          obj.velocity.y += gravityAcceleration.y;
+        }
       }
 
     }

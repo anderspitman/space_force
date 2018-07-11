@@ -1,13 +1,14 @@
 //import { Context } from 'vektar';
 // TODO: Currently expecting vektar to be available locally to speed
 // development
-import { Vector2 } from './math';
+import { Vector2, unitVectorForAngleDegrees } from './math';
 import { Context } from '../lib/vektar/src/index';
 import { Game } from './game';
 import {
   shipDescriptor,
   planetDescriptor,
-  boundingAreaDescriptor
+  boundingAreaDescriptor,
+  bulletDescriptor,
 } from './primitives';
 import { PhysicsEngine } from './physics';
 import { Camera } from './camera';
@@ -18,6 +19,7 @@ const team2Color = 'yellow';
 const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 const KEY_UP = 38;
+const KEY_SPACE = 32;
 
 const game = new Game();
 
@@ -32,8 +34,8 @@ const boundingArea = {
 
 const playerShip = {
   position: {
-    x: 0,
-    y: 0,
+    x: 700,
+    y: 700,
   },
   rotationDegrees: 0,
   scale: 1.0,
@@ -70,6 +72,20 @@ const planet2 = {
   color: team2Color,
 };
 
+const bullets = [
+  {
+    position: {
+      x: 10,
+      y: 10,
+    },
+    velocity: {
+      x: 3,
+      y: 0,
+    },
+    rotationDegrees: 0,
+  }
+];
+
 const scene = [
   {
     primitiveId: 'Ship',
@@ -83,6 +99,10 @@ const scene = [
       planet1,
       planet2,
     ],
+  },
+  {
+    primitiveId: 'Bullet',
+    instances: bullets,
   },
   {
     primitiveId: 'BoundingArea',
@@ -113,17 +133,10 @@ ctx.definePrimitive({
   primitiveId: 'BoundingArea',
   descriptor: boundingAreaDescriptor 
 });
+ctx.definePrimitive({ primitiveId: 'Bullet', descriptor: bulletDescriptor });
 
 ctx.setBackgroundColor('black');
 
-// handle keyboard input
-const keys = {};
-document.addEventListener('keyup', function(e) {
-  keys[e.keyCode] = false;
-});
-document.addEventListener('keydown', function(e) {
-  keys[e.keyCode] = true;
-});
 
 const camera = new Camera(ctx);
 
@@ -131,11 +144,16 @@ const physics = new PhysicsEngine();
 
 const shipBounds = physics.calculateBoundingArea(shipDescriptor);
 const planetBounds = physics.calculateBoundingArea(planetDescriptor);
+const bulletBounds = physics.calculateBoundingArea(bulletDescriptor);
+
+physics.add(bullets[0])
+  .setHasGravity(false)
 
 const shipPhysics = physics.add(playerShip)
   .setBounds(shipBounds)
   .setMass(10)
   .setPositioning('dynamic')
+  //.setHasGravity(false)
 
 const planet1Physics = physics.add(planet1)
   .setBounds(planetBounds)
@@ -151,6 +169,7 @@ const planetsPhysics = physics.createGroup();
 planetsPhysics.add(planet1Physics);
 planetsPhysics.add(planet2Physics);
 
+const bulletPhysics = physics.createGroup();
 
 var gamepads = {};
 
@@ -176,7 +195,51 @@ window.addEventListener("gamepaddisconnected", function(e) {
 const LEFT_ANALOG_X_INDEX = 0;
 const RIGHT_ANALOG_Y_INDEX = 3;
 
+// handle keyboard input
+const keys = {};
+document.addEventListener('keyup', function(e) {
+  keys[e.keyCode] = false;
+});
+document.addEventListener('keydown', function(e) {
+  keys[e.keyCode] = true;
+
+  if (e.keyCode == KEY_SPACE) {
+
+    const bulletSpeed = 5;
+    const angle =
+      playerShip.initialRotationDegrees + playerShip.rotationDegrees;
+    const unitVelocity = unitVectorForAngleDegrees(angle);
+    const velocity = unitVelocity.scaledBy(bulletSpeed);
+
+    const newBullet = {
+      position: {
+        x: playerShip.position.x,
+        y: playerShip.position.y,
+      },
+      velocity: {
+        x: velocity.x,
+        y: velocity.y,
+      },
+      rotationDegrees: angle,
+    };
+
+    const phys = physics.add(newBullet)
+      .setMass(1)
+      .setHasGravity(false)
+      .setPositioning('dynamic')
+      .setBounds(bulletBounds)
+
+    bullets.push(newBullet);
+    bulletPhysics.add(phys);
+  }
+});
+
 physics.collide(shipPhysics, planetsPhysics, function(ship, planet) {
+  console.log("ship hit planet");
+});
+
+physics.collide(bulletPhysics, planetsPhysics, function(ship, planet) {
+  console.log("bullet hit planet");
 });
 
 function step() {

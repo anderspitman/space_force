@@ -1,3 +1,13 @@
+export const bulletDescriptor = {
+  type: 'Rectangle',
+  position: '%position',
+  rotationDegrees: '%rotationDegrees',
+  width: 2,
+  height: 1,
+  strokeColor: 'white',
+  fillColor: 'white',
+};
+
 export const boundingAreaDescriptor = {
   type: 'Group',
   position: '%position',
