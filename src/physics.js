@@ -45,6 +45,21 @@ class PhysicsObject {
 }
 PhysicsObject.nextId = 0;
 
+class PhysicsGroup {
+
+  constructor() {
+    this.objs = [];
+  }
+
+  add(obj) {
+    this.objs.push(obj);
+  }
+
+  getMembers() {
+    return this.objs;
+  }
+}
+
 export class PhysicsEngine {
 
   constructor() {
@@ -59,15 +74,30 @@ export class PhysicsEngine {
     return physicsObj;
   }
 
+  createGroup() {
+    return new PhysicsGroup();
+  }
+
   collide(a, b, callback) {
-    if (!(a instanceof PhysicsObject) || !(b instanceof PhysicsObject)) {
+    if (!(a instanceof PhysicsObject || a instanceof PhysicsGroup) ||
+        !(b instanceof PhysicsObject || b instanceof PhysicsGroup)) {
       throw "Invalid type";
+    }
+
+    let setA = [a];
+    if (a instanceof PhysicsGroup) {
+      setA = a.getMembers();
+    }
+
+    let setB = [b];
+    if (b instanceof PhysicsGroup) {
+      setB = b.getMembers();
     }
 
     this.collisionSets.push({
       callback,
-      a: [a],
-      b: [b],
+      a: setA,
+      b: setB,
     });
   }
 

@@ -137,7 +137,7 @@ const shipPhysics = physics.add(playerShip)
   .setMass(10)
   .setPositioning('dynamic')
 
-const planetPhysics = physics.add(planet1)
+const planet1Physics = physics.add(planet1)
   .setBounds(planetBounds)
   .setMass(400)
   .setPositioning('static')
@@ -146,6 +146,11 @@ const planet2Physics = physics.add(planet2)
   .setBounds(planetBounds)
   .setMass(200)
   .setPositioning('static')
+
+const planetsPhysics = physics.createGroup();
+planetsPhysics.add(planet1Physics);
+planetsPhysics.add(planet2Physics);
+
 
 var gamepads = {};
 
@@ -171,9 +176,7 @@ window.addEventListener("gamepaddisconnected", function(e) {
 const LEFT_ANALOG_X_INDEX = 0;
 const RIGHT_ANALOG_Y_INDEX = 3;
 
-physics.collide(shipPhysics, planetPhysics, function(ship, planet) {
-});
-physics.collide(shipPhysics, planet2Physics, function(ship, planet) {
+physics.collide(shipPhysics, planetsPhysics, function(ship, planet) {
 });
 
 function step() {
