@@ -46,6 +46,7 @@ const playerShip = {
     y: 0,
   },
   thrustersOn: false,
+  visible: true,
 };
 
 const planet1 = {
@@ -104,12 +105,12 @@ const scene = [
     primitiveId: 'Bullet',
     instances: bullets,
   },
-  {
-    primitiveId: 'BoundingArea',
-    instances: [
-      boundingArea,
-    ]
-  },
+  //{
+  //  primitiveId: 'BoundingArea',
+  //  instances: [
+  //    boundingArea,
+  //  ]
+  //},
 ];
 
 const worldWidth = 10000;
@@ -204,43 +205,51 @@ document.addEventListener('keydown', function(e) {
   keys[e.keyCode] = true;
 
   if (e.keyCode == KEY_SPACE) {
-
-    const bulletSpeed = 5;
-    const angle =
-      playerShip.initialRotationDegrees + playerShip.rotationDegrees;
-    const unitVelocity = unitVectorForAngleDegrees(angle);
-    const velocity = unitVelocity.scaledBy(bulletSpeed);
-
-    const newBullet = {
-      position: {
-        x: playerShip.position.x,
-        y: playerShip.position.y,
-      },
-      velocity: {
-        x: velocity.x,
-        y: velocity.y,
-      },
-      rotationDegrees: angle,
-    };
-
-    const phys = physics.add(newBullet)
-      .setMass(1)
-      .setHasGravity(false)
-      .setPositioning('dynamic')
-      .setBounds(bulletBounds)
-
-    bullets.push(newBullet);
-    bulletPhysics.add(phys);
+    fireBullet();
   }
 });
 
 physics.collide(shipPhysics, planetsPhysics, function(ship, planet) {
-  console.log("ship hit planet");
+  //console.log("ship hit planet");
+  ship.obj.position.x = 700;
+  ship.obj.position.y = 700;
+  ship.obj.velocity.x = 0;
+  ship.obj.velocity.y = 0;
+  ship.obj.rotationDegrees = 0;
 });
 
 physics.collide(bulletPhysics, planetsPhysics, function(ship, planet) {
-  console.log("bullet hit planet");
+  //console.log("bullet hit planet");
 });
+
+function fireBullet() {
+  const bulletSpeed = 5;
+  const angle =
+    playerShip.initialRotationDegrees + playerShip.rotationDegrees;
+  const unitVelocity = unitVectorForAngleDegrees(angle);
+  const velocity = unitVelocity.scaledBy(bulletSpeed);
+
+  const newBullet = {
+    position: {
+      x: playerShip.position.x,
+      y: playerShip.position.y,
+    },
+    velocity: {
+      x: velocity.x,
+      y: velocity.y,
+    },
+    rotationDegrees: angle,
+  };
+
+  const phys = physics.add(newBullet)
+    .setMass(1)
+    .setHasGravity(false)
+    .setPositioning('dynamic')
+    .setBounds(bulletBounds)
+
+  bullets.push(newBullet);
+  bulletPhysics.add(phys);
+}
 
 function step() {
 
@@ -253,8 +262,12 @@ function step() {
   const gp = gamepads[0];
 
   if (gp) {
-    rotation = gp.axes[LEFT_ANALOG_X_INDEX] * rotationStep;
+    rotation = -gp.axes[LEFT_ANALOG_X_INDEX] * rotationStep;
     thrust = -gp.axes[RIGHT_ANALOG_Y_INDEX] * FULL_THRUST;
+
+    if (gp.buttons[5].pressed) {
+      fireBullet();
+    }
   }
 
   playerShip.rotationDegrees += rotation;

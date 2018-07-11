@@ -35,6 +35,7 @@ export const shipDescriptor = {
   type: 'Group',
   position: '%position',
   rotationDegrees: '%rotationDegrees',
+  visible: '%visible',
   children: [
     //{
     //  id: 'center-marker',
