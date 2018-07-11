@@ -19,20 +19,9 @@ const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 const KEY_UP = 38;
 
-const DEGREES_TO_RADIANS = Math.PI / 180;
-
 const game = new Game();
 
 const boundingArea = {
-  position: {
-    x: 0,
-    y: 0,
-  },
-  width: 10,
-  height: 10,
-};
-
-const planetBound = {
   position: {
     x: 0,
     y: 0,
@@ -99,7 +88,6 @@ const scene = [
     primitiveId: 'BoundingArea',
     instances: [
       boundingArea,
-      planetBound
     ]
   },
 ];
@@ -141,37 +129,23 @@ const camera = new Camera(ctx);
 
 const physics = new PhysicsEngine();
 
-physics.add(playerShip)
+const shipBounds = physics.calculateBoundingArea(shipDescriptor);
+const planetBounds = physics.calculateBoundingArea(planetDescriptor);
+
+const shipPhysics = physics.add(playerShip)
+  .setBounds(shipBounds)
   .setMass(10)
   .setPositioning('dynamic')
 
-physics.add(planet1)
+const planetPhysics = physics.add(planet1)
+  .setBounds(planetBounds)
   .setMass(400)
   .setPositioning('static')
 
-physics.add(planet2)
+const planet2Physics = physics.add(planet2)
+  .setBounds(planetBounds)
   .setMass(200)
   .setPositioning('static')
-
-const bbox = physics.calculateBoundingArea(shipDescriptor);
-const bboxPlanet  = physics.calculateBoundingArea(planetDescriptor);
-console.log(bbox);
-console.log(bboxPlanet);
-
-planetBound.width = bboxPlanet.xMax - bboxPlanet.xMin;
-planetBound.height = bboxPlanet.yMax - bboxPlanet.yMin;
-planetBound.radius = bboxPlanet.radius;
-planetBound.circlePosition = {
-  x: bboxPlanet.xMax,
-  y: bboxPlanet.yMin,
-};
-planetBound.position.x = planet1.position.x + bboxPlanet.xMin;
-planetBound.position.y = planet1.position.y + bboxPlanet.yMax;
-planetBound.rotationDegrees = planet1.rotationDegrees;
-planetBound.anchor = {
-  x: -bboxPlanet.xMin,
-  y: bboxPlanet.yMax,
-};
 
 var gamepads = {};
 
@@ -187,16 +161,25 @@ function gamepadHandler(event, connecting) {
   }
 }
 
-window.addEventListener("gamepadconnected", function(e) { gamepadHandler(e, true); }, false);
-window.addEventListener("gamepaddisconnected", function(e) { gamepadHandler(e, false); }, false);
+window.addEventListener("gamepadconnected", function(e) {
+  gamepadHandler(e, true);
+}, false);
+window.addEventListener("gamepaddisconnected", function(e) {
+  gamepadHandler(e, false);
+}, false);
 
 const LEFT_ANALOG_X_INDEX = 0;
 const RIGHT_ANALOG_Y_INDEX = 3;
 
+physics.collide(shipPhysics, planetPhysics, function(ship, planet) {
+});
+physics.collide(shipPhysics, planet2Physics, function(ship, planet) {
+});
+
 function step() {
 
   const rotationStep = 5.0;
-  const thrustAcceleration = 0.1;
+  const FULL_THRUST = 0.1;
 
   let rotation = 0.0;
   let thrust = 0.0;
@@ -205,7 +188,7 @@ function step() {
 
   if (gp) {
     rotation = gp.axes[LEFT_ANALOG_X_INDEX] * rotationStep;
-    thrust = -gp.axes[RIGHT_ANALOG_Y_INDEX] * thrustAcceleration;
+    thrust = -gp.axes[RIGHT_ANALOG_Y_INDEX] * FULL_THRUST;
   }
 
   playerShip.rotationDegrees += rotation;
@@ -219,59 +202,36 @@ function step() {
 
   playerShip.thrustersOn = keys[KEY_UP] || Math.abs(thrust) > 0.001;
 
-  // movement
-  const adjustedRotation =
-    playerShip.rotationDegrees + playerShip.initialRotationDegrees;
-  const rotationRadians = adjustedRotation * DEGREES_TO_RADIANS;
-  const rotationX = Math.cos(rotationRadians);
-  const rotationY = Math.sin(rotationRadians);
-
   if (playerShip.thrustersOn) {
-    playerShip.velocity.x += rotationX * thrustAcceleration;
-    playerShip.velocity.y += rotationY * thrustAcceleration;
+    shipPhysics.accelerateForward(FULL_THRUST);
   }
 
   if (Math.abs(thrust) > 0.001) {
-    playerShip.velocity.x += rotationX * thrust;
-    playerShip.velocity.y += rotationY * thrust;
+    shipPhysics.accelerateForward(thrust);
   }
 
-  playerShip.position.x += playerShip.velocity.x;
-  playerShip.position.y += playerShip.velocity.y;
+  camera.setCenterPosition(playerShip.position);
 
-  boundingArea.width = bbox.xMax - bbox.xMin;
-  boundingArea.height = bbox.yMax - bbox.yMin;
-  boundingArea.radius = bbox.radius;
-  boundingArea.circlePosition = {
-    x: bbox.xMax,
-    y: bbox.yMin,
-  };
-  boundingArea.position.x = playerShip.position.x + bbox.xMin;
-  boundingArea.position.y = playerShip.position.y + bbox.yMax;
-  boundingArea.rotationDegrees = playerShip.rotationDegrees;
-  boundingArea.anchor = {
-    x: -bbox.xMin,
-    y: bbox.yMax,
-  };
+  physics.tick();
 
   const shipPos = new Vector2(playerShip.position);
   const planetPos = new Vector2(planet1.position);
-
   const distance = shipPos.disanceTo(planetPos);
 
-  if (distance < bbox.radius + bboxPlanet.radius) {
-    console.log("colliding");
-    playerShip.position.x = 0;
-    playerShip.position.y = 0;
-    playerShip.velocity.x = 0;
-    playerShip.velocity.y = 0;
-  }
-
-
-  camera.setCenterPosition(playerShip.position);
-  //camera.setCenterPosition({ x: 0, y: 0 });
-
-  physics.tick();
+  boundingArea.width = shipBounds.xMax - shipBounds.xMin;
+  boundingArea.height = shipBounds.yMax - shipBounds.yMin;
+  boundingArea.radius = shipBounds.radius;
+  boundingArea.circlePosition = {
+    x: shipBounds.xMax,
+    y: shipBounds.yMin,
+  };
+  boundingArea.position.x = playerShip.position.x + shipBounds.xMin;
+  boundingArea.position.y = playerShip.position.y + shipBounds.yMax;
+  boundingArea.rotationDegrees = playerShip.rotationDegrees;
+  boundingArea.anchor = {
+    x: -shipBounds.xMin,
+    y: shipBounds.yMax,
+  };
 
   ctx.render({ scene });
   requestAnimationFrame(step);

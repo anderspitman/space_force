@@ -1,8 +1,26 @@
 import { Vector2 } from './math';
 
+const DEGREES_TO_RADIANS = Math.PI / 180;
+
 class PhysicsObject {
-  constructor(obj) {
+  static create(obj) {
+    const physicsObj = new PhysicsObject({ id: PhysicsObject.nextId, obj });
+    PhysicsObject.nextId++;
+    return physicsObj;
+  }
+
+  constructor({ id, obj }) {
+    this.id = id;
     this.obj = obj;
+  }
+
+  getId() {
+    return this.id;
+  }
+
+  setBounds(value) {
+    this.bounds = value;
+    return this;
   }
 
   setMass(value) {
@@ -14,19 +32,43 @@ class PhysicsObject {
     this.positioning = value;
     return this;
   }
+
+  accelerateForward(acceleration) {
+    const adjustedRotation =
+      this.obj.rotationDegrees + this.obj.initialRotationDegrees;
+    const rotationRadians = adjustedRotation * DEGREES_TO_RADIANS;
+    const rotationX = Math.cos(rotationRadians);
+    const rotationY = Math.sin(rotationRadians);
+    this.obj.velocity.x += rotationX * acceleration;
+    this.obj.velocity.y += rotationY * acceleration;
+  }
 }
+PhysicsObject.nextId = 0;
 
 export class PhysicsEngine {
 
   constructor() {
     this.timeLastTick = timeNowSeconds();
     this.objs = [];
+    this.collisionSets = [];
   }
 
   add(obj) {
-    const physicsObj = new PhysicsObject(obj);
+    const physicsObj = PhysicsObject.create(obj);
     this.objs.push(physicsObj);
     return physicsObj;
+  }
+
+  collide(a, b, callback) {
+    if (!(a instanceof PhysicsObject) || !(b instanceof PhysicsObject)) {
+      throw "Invalid type";
+    }
+
+    this.collisionSets.push({
+      callback,
+      a: [a],
+      b: [b],
+    });
   }
 
   tick() {
@@ -42,6 +84,12 @@ export class PhysicsEngine {
       const obj = physicsObj.obj;
 
       if (physicsObj.positioning === 'dynamic') {
+
+        // TODO: this should maybe go after the gravity is applied
+        obj.position.x += obj.velocity.x;
+        obj.position.y += obj.velocity.y;
+
+        // apply gravity
         for (let other of this.objs) {
           if (other.positioning === 'static') {
             const thisPos = new Vector2(obj.position);
@@ -66,6 +114,8 @@ export class PhysicsEngine {
 
     }
 
+    this.checkCollisionSets();
+
     //const tickDuration = timeNowSeconds() - timeStartTick;
     //console.log(tickDuration);
     //console.log(timeElapsed);
@@ -76,6 +126,30 @@ export class PhysicsEngine {
       new BoundingBoxCalculator().calculateBoundingArea(descriptor);
 
     return bbox;
+  }
+
+  checkCollisionSets() {
+    for (let set of this.collisionSets) {
+      this.checkCollisionSet(set);
+    }
+  }
+
+  checkCollisionSet(set) {
+    for (let a of set.a) {
+      for (let b of set.b) {
+        const aPos = new Vector2(a.obj.position);
+        const bPos = new Vector2(b.obj.position);
+        const distance = aPos.disanceTo(bPos);
+        const collisionDistance = a.bounds.radius + b.bounds.radius;
+
+        if (distance < collisionDistance) {
+          set.callback(a, b);
+        }
+      }
+    }
+  }
+
+  checkGravity() {
   }
 }
 
@@ -179,6 +253,9 @@ class BoundingBoxCalculator {
 function gravityForce({ mass1, mass2, radius }) {
   const multiplier = 0.01;
   let force = (mass1 * mass2) / (radius * radius); 
+  
+  // TODO: should be able to remove this once the ship isn't able to
+  // reach the center of the planets. It was flying off
   if (force > 0.1) {
     force = 0.1;
   }

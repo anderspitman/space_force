@@ -4,13 +4,13 @@ export const boundingAreaDescriptor = {
   anchor: '%anchor',
   rotationDegrees: '%rotationDegrees',
   children: [
-    {
-      type: 'Rectangle',
-      width: '%width',
-      height: '%height',
-      strokeColor: 'red',
-      fillColor: 'none',
-    },
+    //{
+    //  type: 'Rectangle',
+    //  width: '%width',
+    //  height: '%height',
+    //  strokeColor: 'red',
+    //  fillColor: 'none',
+    //},
     {
       type: 'Circle',
       position: '%circlePosition',
