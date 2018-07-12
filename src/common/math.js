@@ -1,6 +1,6 @@
-export const DEGREES_TO_RADIANS = Math.PI / 180;
+const DEGREES_TO_RADIANS = Math.PI / 180;
 
-export class Vector2 {
+class Vector2 {
   constructor({ x, y }) {
     this.x = x;
     this.y = y;
@@ -44,9 +44,15 @@ export class Vector2 {
   }
 }
 
-export function unitVectorForAngleDegrees(angle) {
+function unitVectorForAngleDegrees(angle) {
   const rotationRadians = angle * DEGREES_TO_RADIANS;
   const rotationX = Math.cos(rotationRadians);
   const rotationY = Math.sin(rotationRadians);
   return new Vector2({ x: rotationX, y: rotationY });
 }
+
+module.exports = {
+  DEGREES_TO_RADIANS,
+  Vector2,
+  unitVectorForAngleDegrees,
+};

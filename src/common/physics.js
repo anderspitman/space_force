@@ -1,4 +1,4 @@
-import { Vector2, unitVectorForAngleDegrees } from './math';
+const { Vector2, unitVectorForAngleDegrees } = require('./math');
 
 class PhysicsObject {
   static create(obj) {
@@ -64,7 +64,7 @@ class PhysicsGroup {
   }
 }
 
-export class PhysicsEngine {
+class PhysicsEngine {
 
   constructor() {
     this.timeLastTick = timeNowSeconds();
@@ -299,6 +299,12 @@ function gravityForce({ mass1, mass2, radius }) {
 }
 
 function timeNowSeconds() {
-  const time = performance.now() / 1000;
-  return time;
+  return 0.0;
+  // TODO: fix for node
+  //const time = performance.now() / 1000;
+  //return time;
 }
+
+module.exports = {
+  PhysicsEngine
+};

@@ -1,4 +1,4 @@
-export const bulletDescriptor = {
+const bulletDescriptor = {
   type: 'Rectangle',
   position: '%position',
   rotationDegrees: '%rotationDegrees',
@@ -8,7 +8,7 @@ export const bulletDescriptor = {
   fillColor: 'white',
 };
 
-export const boundingAreaDescriptor = {
+const boundingAreaDescriptor = {
   type: 'Group',
   position: '%position',
   anchor: '%anchor',
@@ -31,7 +31,7 @@ export const boundingAreaDescriptor = {
   ]
 };
 
-export const shipDescriptor = {
+const shipDescriptor = {
   type: 'Group',
   position: '%position',
   rotationDegrees: '%rotationDegrees',
@@ -92,7 +92,7 @@ export const shipDescriptor = {
   ],
 };
 
-export const planetDescriptor = {
+const planetDescriptor = {
   type: 'Group',
   position: '%position',
   children: [
@@ -185,4 +185,11 @@ export const planetDescriptor = {
       ]
     }
   ],
+};
+
+module.exports = {
+  bulletDescriptor,
+  boundingAreaDescriptor,
+  shipDescriptor,
+  planetDescriptor,
 };
