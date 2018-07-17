@@ -232,7 +232,8 @@ function init() {
     const angle =
       playerShip.initialRotationDegrees + playerShip.rotationDegrees;
     const unitVelocity = math.unitVectorForAngleDegrees(angle);
-    const velocity = unitVelocity.scaledBy(bulletSpeed);
+    const velocity = unitVelocity.scaledBy(bulletSpeed)
+      .add(playerShip.velocity);
 
     const newBullet = {
       position: {
