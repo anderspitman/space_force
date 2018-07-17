@@ -8,36 +8,73 @@ const {
   bulletDescriptor,
 } = require('../common/primitives');
 
-const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 const KEY_UP = 38;
 const KEY_SPACE = 32;
-
-const keys = {};
 
 const wss = new WebSocket.Server({
   port: 8081,
   //clientTracking: true,
 });
 
-let gWs;
-
 let firstPlayer = true;
 
+let nextPlayerId = 0;
+const playerConnections = {};
+
+const colors = [
+  'blue',
+  'orange',
+  'yellow',
+  'red',
+  'green',
+];
+
+const players = [];
+
 wss.on('connection', function connection(ws, req) {
+
+  // add new player
+  playerConnections[nextPlayerId] = ws;
+  const initPlayerMessage = {
+    type: 'playerId',
+    playerId: nextPlayerId,
+  };
+
+  players.push({
+    position: {
+      x: Math.random() * 700,
+      y: Math.random() * 700,
+    },
+    rotationDegrees: 0,
+    rotation: 0,
+    scale: 1.0,
+    color: colors[nextPlayerId],
+    initialRotationDegrees: 90,
+    velocity: {
+      x: 0,
+      y: 0,
+    },
+    thrustersOn: false,
+    visible: true,
+    timeLastBullet: 0,
+  });
+
+  nextPlayerId++;
 
   ws.on('message', function incoming(message) {
 
     const data = JSON.parse(message);
 
     switch (data.type) {
-      case 'key-down':
-        keys[data.keyCode] = true;
-        console.log(keys);
+      case 'set-rotation':
+        players[data.playerId].rotation = data.rotation;
         break;
-      case 'key-up':
-        keys[data.keyCode] = false;
-        console.log(keys);
+      case 'set-thrusters-on':
+        players[data.playerId].thrustersOn = data.thrustersOn;
+        break;
+      case 'set-firing':
+        players[data.playerId].firing = data.firing;
         break;
       default:
         console.log("sending state update");
@@ -46,37 +83,19 @@ wss.on('connection', function connection(ws, req) {
     }
   });
 
+  ws.on('close', function() {
+    // TODO: delete from list
+  });
+
+  ws.send(JSON.stringify(initPlayerMessage));
+
   if (firstPlayer) {
+    firstPlayer = false;
     init();
   }
 });
 
 function init() {
-
-  firstPlayer = false;
-
-  const team1Color = 'blue';
-  const team2Color = 'yellow';
-
-  const players = [];
-
-  const player1 = {
-    position: {
-      x: 700,
-      y: 700,
-    },
-    rotationDegrees: 0,
-    scale: 1.0,
-    color: team1Color,
-    initialRotationDegrees: 90,
-    velocity: {
-      x: 0,
-      y: 0,
-    },
-    thrustersOn: false,
-    visible: true,
-  };
-  players.push(player1);
 
   const planet1 = {
     position: {
@@ -87,7 +106,7 @@ function init() {
     scale: 1.0,
     showBuilding: true,
     hasRadar: false,
-    color: team1Color,
+    color: colors[0],
   };
 
   const planet2 = {
@@ -99,7 +118,7 @@ function init() {
     scale: 1.0,
     showBuilding: true,
     hasRadar: true,
-    color: team2Color,
+    color: colors[2],
   };
 
   const bullets = [
@@ -136,7 +155,7 @@ function init() {
 
   const physics = new PhysicsEngine();
 
-  player1.bounds = physics.calculateBoundingArea(shipDescriptor);
+  players[0].bounds = physics.calculateBoundingArea(shipDescriptor);
   // TODO: remove this duplication
   planet1.bounds = physics.calculateBoundingArea(planetDescriptor);
   planet2.bounds = physics.calculateBoundingArea(planetDescriptor);
@@ -145,8 +164,8 @@ function init() {
   physics.add(bullets[0])
     .setHasGravity(false)
 
-  const shipPhysics = physics.add(player1)
-    .setBounds(player1.bounds)
+  const shipPhysics = physics.add(players[0])
+    .setBounds(players[0].bounds)
     .setMass(10)
     .setPositioning('dynamic')
     //.setHasGravity(false)
@@ -180,12 +199,11 @@ function init() {
     //console.log("bullet hit planet");
   });
   
-  const rotationStep = 5.0;
+  //const rotationStep = 5.0;
   const FULL_THRUST = 0.1;
   const bulletDelay = 0.1;
 
   let timeLastMessage = 0;
-  let timeLastBullet = 0;
 
   setInterval(function() {
 
@@ -195,26 +213,20 @@ function init() {
 
     //console.log(elapsed);
 
-    if (keys[KEY_LEFT]) {
-      player1.rotationDegrees += rotationStep;
-    }
-    else if (keys[KEY_RIGHT]) {
-      player1.rotationDegrees -= rotationStep;
-    }
-
-    if (keys[KEY_SPACE]) {
-      const bulletElapsed = timeNow - timeLastBullet;
-      if (bulletElapsed > bulletDelay) {
-        fireBullet(0);
-        timeLastBullet = timeNow;
-      }
-    }
-
-    player1.thrustersOn = keys[KEY_UP];
-
-    if (player1.thrustersOn) {
+    if (players[0].thrustersOn) {
       shipPhysics.accelerateForward(FULL_THRUST);
     }
+
+    // TODO: handle per player
+    players.forEach(function(player, i) {
+      if (player.firing) {
+        const bulletElapsed = timeNow - player.timeLastBullet;
+        if (bulletElapsed > bulletDelay) {
+          fireBullet(i);
+          player.timeLastBullet = timeNow;
+        }
+      }
+    });
 
     // run physics every 10ms, but only send updates every 100
     physics.tick();

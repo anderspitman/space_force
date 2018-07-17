@@ -13,15 +13,20 @@ import {
 import { PhysicsEngine } from '../common/physics';
 import { Camera } from '../camera';
 
+const KEY_LEFT = 37;
+const KEY_RIGHT = 39;
+const KEY_UP = 38;
+const KEY_SPACE = 32;
+
 let firstRun = true;
 
 class StateService {
 
-  constructor(websocketPort) {
-
-    const self = this;
+  constructor() {
 
     this.timeLastMessage = timeNowSeconds();
+
+    const self = this;
 
     this._ready = new Promise(function(resolve, reject) {
       const hostname = window.location.hostname;
@@ -30,12 +35,23 @@ class StateService {
 
       self._ws = new WebSocket(websocketString);
       self._ws.onopen = function() {
+
         self._ws.onmessage = function(message) {
           
-          self.state = JSON.parse(message.data);
-          self._ws.onmessage = self._onMessage.bind(self);
+          const payload = JSON.parse(message.data);
 
-          resolve(self.state);
+          if (self._playerId !== undefined) {
+            console.log("Player ID: " + self._playerId);
+            self.state = payload;
+            self._ws.onmessage = self._onMessage.bind(self);
+
+            resolve(self.state);
+          }
+          else {
+            if (payload.type === 'playerId') {
+              self._playerId = payload.playerId;
+            }
+          }
         }
       };
     });
@@ -49,18 +65,31 @@ class StateService {
     return this._ready;
   }
 
-  keyDown(keyCode) {
-    this._ws.send(JSON.stringify({
-      type: 'key-down',
-      keyCode: keyCode
-    }));
+  setRotation(rotation) {
+    this._send({
+      type: 'set-rotation',
+      rotation
+    });
   }
 
-  keyUp(keyCode) {
-    this._ws.send(JSON.stringify({
-      type: 'key-up',
-      keyCode: keyCode
-    }));
+  setThrustersOn(thrustersOn) {
+    this._send({
+      type: 'set-thrusters-on',
+      thrustersOn, 
+    });
+  }
+
+  setFiring(firing) {
+    this._send({
+      type: 'set-firing',
+      firing, 
+    });
+  }
+
+  _send(message) {
+    message.playerId = this._playerId;
+    //console.log(message);
+    this._ws.send(JSON.stringify(message));
   }
 
   _onMessage(message) {
@@ -143,22 +172,28 @@ function main(initialState) {
   const keys = {};
   document.addEventListener('keyup', function(e) {
     keys[e.keyCode] = false;
-    stateService.keyUp(e.keyCode);
   });
   document.addEventListener('keydown', function(e) {
     keys[e.keyCode] = true;
-
-    //if (e.keyCode == KEY_SPACE) {
-    //  fireBullet();
-    //}
-
-    stateService.keyDown(e.keyCode);
   });
 
   function step() {
 
     let rotation = 0.0;
     let thrust = 0.0;
+
+    if (keys[KEY_LEFT]) {
+      stateService.setRotation(1.0);
+    }
+    else if (keys[KEY_RIGHT]) {
+      stateService.setRotation(-1.0);
+    }
+    else {
+      stateService.setRotation(0.0);
+    }
+
+    stateService.setThrustersOn(keys[KEY_UP]);
+    stateService.setFiring(keys[KEY_SPACE]);
 
     //const gp = gamepads[0];
     //if (gp) {

@@ -1,5 +1,7 @@
 const { Vector2, unitVectorForAngleDegrees } = require('./math');
 
+const rotationStep = 5.0;
+
 class PhysicsObject {
   static create(obj) {
     const physicsObj = new PhysicsObject({ id: PhysicsObject.nextId, obj });
@@ -148,6 +150,9 @@ class PhysicsEngine {
         }
       }
 
+      if (obj.rotationDegrees !== undefined && obj.rotation !== undefined) {
+        obj.rotationDegrees += obj.rotation * rotationStep;
+      }
     }
 
     this.checkCollisionSets();
