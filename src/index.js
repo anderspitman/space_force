@@ -65,7 +65,7 @@ class StateService {
 
   _onMessage(message) {
     const timeNow = timeNowSeconds();
-    const elapsed = this.timeLastMessage - timeNow;
+    const elapsed = timeNow - this.timeLastMessage;
     this.timeLastMessage = timeNow;
 
     //console.log(elapsed);

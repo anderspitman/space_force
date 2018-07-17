@@ -181,13 +181,15 @@ function init() {
   
   const rotationStep = 5.0;
   const FULL_THRUST = 0.1;
+  const bulletDelay = 0.1;
 
   let timeLastMessage = 0;
+  let timeLastBullet = 0;
 
   setInterval(function() {
 
     const timeNow = timeNowSeconds();
-    const elapsed = timeLastMessage - timeNow;
+    const elapsed = timeNow - timeLastMessage;
     timeLastMessage = timeNow;
 
     //console.log(elapsed);
@@ -197,6 +199,14 @@ function init() {
     }
     else if (keys[KEY_RIGHT]) {
       playerShip.rotationDegrees -= rotationStep;
+    }
+
+    if (keys[KEY_SPACE]) {
+      const bulletElapsed = timeNow - timeLastBullet;
+      if (bulletElapsed > bulletDelay) {
+        fireBullet();
+        timeLastBullet = timeNow;
+      }
     }
 
     playerShip.thrustersOn = keys[KEY_UP];
@@ -216,35 +226,35 @@ function init() {
 
   // TODO: decouple simulation time from movement speed of objects
   }, 16.667);
-}
 
-function fireBullet() {
-  const bulletSpeed = 5;
-  const angle =
-    playerShip.initialRotationDegrees + playerShip.rotationDegrees;
-  const unitVelocity = unitVectorForAngleDegrees(angle);
-  const velocity = unitVelocity.scaledBy(bulletSpeed);
+  function fireBullet() {
+    const bulletSpeed = 5;
+    const angle =
+      playerShip.initialRotationDegrees + playerShip.rotationDegrees;
+    const unitVelocity = math.unitVectorForAngleDegrees(angle);
+    const velocity = unitVelocity.scaledBy(bulletSpeed);
 
-  const newBullet = {
-    position: {
-      x: playerShip.position.x,
-      y: playerShip.position.y,
-    },
-    velocity: {
-      x: velocity.x,
-      y: velocity.y,
-    },
-    rotationDegrees: angle,
-  };
+    const newBullet = {
+      position: {
+        x: playerShip.position.x,
+        y: playerShip.position.y,
+      },
+      velocity: {
+        x: velocity.x,
+        y: velocity.y,
+      },
+      rotationDegrees: angle,
+    };
 
-  const phys = physics.add(newBullet)
-    .setMass(1)
-    .setHasGravity(false)
-    .setPositioning('dynamic')
-    .setBounds(bulletBounds)
+    const phys = physics.add(newBullet)
+      .setMass(1)
+      .setHasGravity(false)
+      .setPositioning('dynamic')
+      .setBounds(bullets[0].bounds)
 
-  bullets.push(newBullet);
-  bulletPhysics.add(phys);
+    bullets.push(newBullet);
+    bulletPhysics.add(phys);
+  }
 }
 
 function timeNowSeconds() {
