@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const math = require('../common/math');
+const { Vector2, unitVectorForAngleDegrees } = require('../common/math');
 const { PhysicsEngine } = require('../common/physics');
 const {
   shipDescriptor,
@@ -15,6 +15,7 @@ const KEY_SPACE = 32;
 const physics = new PhysicsEngine();
 const shipBounds = physics.calculateBoundingArea(shipDescriptor);
 const planetBounds = physics.calculateBoundingArea(planetDescriptor);
+const bulletBounds = physics.calculateBoundingArea(bulletDescriptor);
 
 const wss = new WebSocket.Server({
   port: 8081,
@@ -46,23 +47,29 @@ wss.on('connection', function connection(ws, req) {
   };
 
   players.push({
+    id: nextPlayerId,
     position: {
       x: Math.random() * 700,
       y: Math.random() * 700,
     },
+    health: 100,
     rotationDegrees: 0,
     rotation: 0,
     scale: 1.0,
     color: colors[nextPlayerId],
     initialRotationDegrees: 90,
-    velocity: {
-      x: 0,
-      y: 0,
-    },
     thrustersOn: false,
     visible: true,
     timeLastBullet: 0,
     bounds: shipBounds,
+    // physics
+    velocity: {
+      x: 0,
+      y: 0,
+    },
+    positioning: 'dynamic',
+    hasGravity: true,
+    mass: 10,
   });
 
   nextPlayerId++;
@@ -112,6 +119,8 @@ function init() {
     showBuilding: true,
     hasRadar: false,
     color: colors[0],
+    positioning: 'static',
+    mass: 200,
   };
 
   const planet2 = {
@@ -124,6 +133,8 @@ function init() {
     showBuilding: true,
     hasRadar: true,
     color: colors[2],
+    positioning: 'static',
+    mass: 400,
   };
 
   const planets = [
@@ -131,19 +142,7 @@ function init() {
     planet2,
   ];
 
-  const bullets = [
-    {
-      position: {
-        x: 10,
-        y: 10,
-      },
-      velocity: {
-        x: 3,
-        y: 0,
-      },
-      rotationDegrees: 0,
-    }
-  ];
+  const bullets = [];
 
   const state = [
     {
@@ -166,44 +165,42 @@ function init() {
   // TODO: remove this duplication
   planet1.bounds = planetBounds;
   planet2.bounds = planetBounds;
-  bullets[0].bounds = physics.calculateBoundingArea(bulletDescriptor);
 
-  physics.add(bullets[0])
-    .setHasGravity(false)
-
-  const shipPhysics = physics.add(players[0])
-    .setBounds(players[0].bounds)
-    .setMass(10)
-    .setPositioning('dynamic')
-
-  const planet1Physics = physics.add(planet1)
-    .setBounds(planet1.bounds)
-    .setMass(400)
-    .setPositioning('static')
-
-  const planet2Physics = physics.add(planet2)
-    .setBounds(planet2.bounds)
-    .setMass(200)
-    .setPositioning('static')
-
-  const planetsPhysics = physics.createGroup();
-  planetsPhysics.add(planet1Physics);
-  planetsPhysics.add(planet2Physics);
-
-  const bulletPhysics = physics.createGroup();
-  
   physics.collide(players, planets, function(ship, planet) {
     //console.log("ship hit planet");
-    ship.position.x = 800;
-    ship.position.y = 800;
-    ship.velocity.x = 0;
-    ship.velocity.y = 0;
-    ship.rotationDegrees = 0;
+    //ship.position.x = 800;
+    //ship.position.y = 800;
+    //ship.velocity.x = 0;
+    //ship.velocity.y = 0;
+    //ship.rotationDegrees = 0;
   });
 
-  //physics.collide(bulletPhysics, planetsPhysics, function(ship, planet) {
-  //  //console.log("bullet hit planet");
-  //});
+  physics.collide(bullets, planets, function(ship, planet) {
+    //console.log("bullet hit planet");
+  });
+
+  physics.collide(bullets, players, function(bullet, player) {
+
+    if (bullet.ownerId === player.id) {
+      return;
+    }
+
+    player.health -= 10;
+
+    if (player.health <= 0) {
+      //const index = players.indexOf(player);
+      //players.splice(index, 1);
+      player.health = 100;
+      player.position.x = 800;
+      player.position.y = 800;
+      player.velocity.x = 0;
+      player.velocity.y = 0;
+      player.rotationDegrees = 0;
+    }
+
+    //const bulletIndex = bullets.indexOf(bullet);
+    //bullets.splice(bulletIndex, 1);
+  });
   
   //const rotationStep = 5.0;
   const FULL_THRUST = 0.1;
@@ -232,14 +229,14 @@ function init() {
       if (player.firing) {
         const bulletElapsed = timeNow - player.timeLastBullet;
         if (bulletElapsed > bulletDelay) {
-          fireBullet(i);
+          fireBullet(player);
           player.timeLastBullet = timeNow;
         }
       }
     });
 
     // run physics every 10ms, but only send updates every 100
-    physics.tick();
+    physics.tick({ state });
 
     wss.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN) {
@@ -250,35 +247,34 @@ function init() {
   // TODO: decouple simulation time from movement speed of objects
   }, 16.667);
 
-  function fireBullet(playerId) {
+  function fireBullet(player) {
     const bulletSpeed = 5;
     const angle =
-      players[playerId].initialRotationDegrees +
-      players[playerId].rotationDegrees;
-    const unitVelocity = math.unitVectorForAngleDegrees(angle);
+      player.initialRotationDegrees + player.rotationDegrees;
+    const unitVelocity = unitVectorForAngleDegrees(angle);
     const velocity = unitVelocity.scaledBy(bulletSpeed)
-      .add(players[playerId].velocity);
+      .add(player.velocity);
 
     const newBullet = {
+      ownerId: player.id,
+      // TODO: if you accidentally use a reference here it gets mutated by
+      // the bullet code.
       position: {
-        x: players[playerId].position.x,
-        y: players[playerId].position.y,
+        x: player.position.x,
+        y: player.position.y,
       },
       velocity: {
         x: velocity.x,
         y: velocity.y,
       },
       rotationDegrees: angle,
+      mass: 1,
+      hasGravity: false,
+      positioning: 'dynamic',
+      bounds: bulletBounds,
     };
 
-    const phys = physics.add(newBullet)
-      .setMass(1)
-      .setHasGravity(false)
-      .setPositioning('dynamic')
-      .setBounds(bullets[0].bounds)
-
     bullets.push(newBullet);
-    bulletPhysics.add(phys);
   }
 }
 

@@ -57,6 +57,10 @@ class StateService {
     });
   }
 
+  getPlayerId() {
+    return this._playerId;
+  }
+
   getState() {
     return this.state;
   }
@@ -209,7 +213,7 @@ function main(initialState) {
     //  shipPhysics.accelerateForward(thrust);
     //}
 
-    const playerShip = state[0].instances[0];
+    const playerShip = state[0].instances[stateService.getPlayerId()];
     camera.setCenterPosition(playerShip.position);
 
     ctx.render({ scene: state });

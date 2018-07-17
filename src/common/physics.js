@@ -2,78 +2,11 @@ const { Vector2, unitVectorForAngleDegrees } = require('./math');
 
 const rotationStep = 5.0;
 
-class PhysicsObject {
-  static create(obj) {
-    const physicsObj = new PhysicsObject({ id: PhysicsObject.nextId, obj });
-    PhysicsObject.nextId++;
-    return physicsObj;
-  }
-
-  constructor({ id, obj }) {
-    this.id = id;
-    this.obj = obj;
-
-    this.positioning = 'dynamic';
-    this.hasGravity = true;
-  }
-
-  getId() {
-    return this.id;
-  }
-
-  setBounds(value) {
-    this.bounds = value;
-    return this;
-  }
-
-  setMass(value) {
-    this.mass = value;
-    return this;
-  }
-
-  setHasGravity(value) {
-    this.hasGravity = value;
-    return this;
-  }
-
-  setPositioning(value) {
-    this.positioning = value;
-    return this;
-  }
-}
-PhysicsObject.nextId = 0;
-
-class PhysicsGroup {
-
-  constructor() {
-    this.objs = [];
-  }
-
-  add(obj) {
-    this.objs.push(obj);
-  }
-
-  getMembers() {
-    return this.objs;
-  }
-}
-
 class PhysicsEngine {
 
   constructor() {
     this.timeLastTick = timeNowSeconds();
-    this.objs = [];
     this.collisionSets = [];
-  }
-
-  add(obj) {
-    const physicsObj = PhysicsObject.create(obj);
-    this.objs.push(physicsObj);
-    return physicsObj;
-  }
-
-  createGroup() {
-    return new PhysicsGroup();
   }
 
   accelerateForward({ object, acceleration }) {
@@ -110,58 +43,41 @@ class PhysicsEngine {
     });
   }
 
-  //collide(a, b, callback) {
-  //  if (!(a instanceof PhysicsObject || a instanceof PhysicsGroup) ||
-  //      !(b instanceof PhysicsObject || b instanceof PhysicsGroup)) {
-  //    throw "Invalid type";
-  //  }
-
-  //  let setA = [a];
-  //  if (a instanceof PhysicsGroup) {
-  //    setA = a.getMembers();
-  //  }
-
-  //  let setB = [b];
-  //  if (b instanceof PhysicsGroup) {
-  //    setB = b.getMembers();
-  //  }
-
-  //  this.collisionSets.push({
-  //    callback,
-  //    a: setA,
-  //    b: setB,
-  //  });
-  //}
-
-  tick() {
+  tick({ state }) {
     const timeStartTick = timeNowSeconds();
     const timeElapsed = timeStartTick - this.timeLastTick;
     this.timeLastTick = timeStartTick;
 
-    for (let physicsObj of this.objs) {
-      
-      const obj = physicsObj.obj;
+    // TODO: This transformation feels like a hack. Maybe figure out a better
+    // way to express the relationships between object types that makes sense
+    // for rendering and physics. Maybe a single flat array like this is best
+    // for both.
+    let objects = [];
+    for (let objectType of state) {
+      objects = objects.concat(objectType.instances);
+    }
 
-      if (physicsObj.positioning === 'dynamic') {
+    for (let i = 0; i < objects.length; i++) {
+      const obj = objects[i];
 
+      if (obj.positioning === 'dynamic') {
         // TODO: this should maybe go after the gravity is applied
         obj.position.x += obj.velocity.x;
         obj.position.y += obj.velocity.y;
 
-        if (physicsObj.hasGravity) {
+        if (obj.hasGravity) {
 
           let gravityAcceleration = new Vector2({ x: 0, y: 0 });
 
-          // apply gravity
-          for (let other of this.objs) {
+          for (let other of objects) {
             if (other.positioning === 'static') {
               const thisPos = new Vector2(obj.position);
-              const otherPos = new Vector2(other.obj.position);
+              const otherPos = new Vector2(other.position);
               const diff = otherPos.subtract(thisPos);
               const accelDir = diff.normalized();
 
               const accelForce = gravityForce({
-                mass1: physicsObj.mass,
+                mass1: obj.mass,
                 mass2: other.mass,
                 radius: diff.getLength()
               });
