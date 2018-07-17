@@ -40,8 +40,8 @@ wss.on('connection', function connection(ws, req) {
         console.log(keys);
         break;
       default:
-        console.log("sending scene update");
-        ws.send(JSON.stringify(scene));
+        console.log("sending state update");
+        ws.send(JSON.stringify(state));
         break;
     }
   });
@@ -58,7 +58,7 @@ function init() {
   const team1Color = 'blue';
   const team2Color = 'yellow';
 
-  const playerShip = {
+  const player1 = {
     position: {
       x: 700,
       y: 700,
@@ -113,11 +113,11 @@ function init() {
     }
   ];
 
-  const scene = [
+  const state = [
     {
       primitiveId: 'Ship',
       instances: [
-        playerShip 
+        player1 
       ]
     },
     {
@@ -135,7 +135,7 @@ function init() {
 
   const physics = new PhysicsEngine();
 
-  playerShip.bounds = physics.calculateBoundingArea(shipDescriptor);
+  player1.bounds = physics.calculateBoundingArea(shipDescriptor);
   // TODO: remove this duplication
   planet1.bounds = physics.calculateBoundingArea(planetDescriptor);
   planet2.bounds = physics.calculateBoundingArea(planetDescriptor);
@@ -144,8 +144,8 @@ function init() {
   physics.add(bullets[0])
     .setHasGravity(false)
 
-  const shipPhysics = physics.add(playerShip)
-    .setBounds(playerShip.bounds)
+  const shipPhysics = physics.add(player1)
+    .setBounds(player1.bounds)
     .setMass(10)
     .setPositioning('dynamic')
     //.setHasGravity(false)
@@ -195,10 +195,10 @@ function init() {
     //console.log(elapsed);
 
     if (keys[KEY_LEFT]) {
-      playerShip.rotationDegrees += rotationStep;
+      player1.rotationDegrees += rotationStep;
     }
     else if (keys[KEY_RIGHT]) {
-      playerShip.rotationDegrees -= rotationStep;
+      player1.rotationDegrees -= rotationStep;
     }
 
     if (keys[KEY_SPACE]) {
@@ -209,9 +209,9 @@ function init() {
       }
     }
 
-    playerShip.thrustersOn = keys[KEY_UP];
+    player1.thrustersOn = keys[KEY_UP];
 
-    if (playerShip.thrustersOn) {
+    if (player1.thrustersOn) {
       shipPhysics.accelerateForward(FULL_THRUST);
     }
 
@@ -220,7 +220,7 @@ function init() {
 
     wss.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(scene));
+        client.send(JSON.stringify(state));
       }
     });
 
@@ -230,15 +230,15 @@ function init() {
   function fireBullet() {
     const bulletSpeed = 5;
     const angle =
-      playerShip.initialRotationDegrees + playerShip.rotationDegrees;
+      player1.initialRotationDegrees + player1.rotationDegrees;
     const unitVelocity = math.unitVectorForAngleDegrees(angle);
     const velocity = unitVelocity.scaledBy(bulletSpeed)
-      .add(playerShip.velocity);
+      .add(player1.velocity);
 
     const newBullet = {
       position: {
-        x: playerShip.position.x,
-        y: playerShip.position.y,
+        x: player1.position.x,
+        y: player1.position.y,
       },
       velocity: {
         x: velocity.x,
