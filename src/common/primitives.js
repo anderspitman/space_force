@@ -47,8 +47,6 @@ const shipDescriptor = {
     {
       id: 'main-body',
       type: 'Triangle',
-      width: 20,
-      height: 20,
       vertices: {
         vertex1: { x: 0, y: 10 },
         vertex2: { x: 10, y: -10 },
@@ -168,8 +166,6 @@ const planetDescriptor = {
         {
           id: 'dish',
           type: 'Triangle',
-          width: 30,
-          height: 30,
           position: {
             x: 30,
             y: 20,
