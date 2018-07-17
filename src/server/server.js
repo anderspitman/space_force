@@ -12,6 +12,10 @@ const KEY_RIGHT = 39;
 const KEY_UP = 38;
 const KEY_SPACE = 32;
 
+const physics = new PhysicsEngine();
+const shipBounds = physics.calculateBoundingArea(shipDescriptor);
+const planetBounds = physics.calculateBoundingArea(planetDescriptor);
+
 const wss = new WebSocket.Server({
   port: 8081,
   //clientTracking: true,
@@ -58,6 +62,7 @@ wss.on('connection', function connection(ws, req) {
     thrustersOn: false,
     visible: true,
     timeLastBullet: 0,
+    bounds: shipBounds,
   });
 
   nextPlayerId++;
@@ -121,6 +126,11 @@ function init() {
     color: colors[2],
   };
 
+  const planets = [
+    planet1,
+    planet2,
+  ];
+
   const bullets = [
     {
       position: {
@@ -153,12 +163,9 @@ function init() {
     },
   ];
 
-  const physics = new PhysicsEngine();
-
-  players[0].bounds = physics.calculateBoundingArea(shipDescriptor);
   // TODO: remove this duplication
-  planet1.bounds = physics.calculateBoundingArea(planetDescriptor);
-  planet2.bounds = physics.calculateBoundingArea(planetDescriptor);
+  planet1.bounds = planetBounds;
+  planet2.bounds = planetBounds;
   bullets[0].bounds = physics.calculateBoundingArea(bulletDescriptor);
 
   physics.add(bullets[0])
@@ -168,7 +175,6 @@ function init() {
     .setBounds(players[0].bounds)
     .setMass(10)
     .setPositioning('dynamic')
-    //.setHasGravity(false)
 
   const planet1Physics = physics.add(planet1)
     .setBounds(planet1.bounds)
@@ -186,18 +192,18 @@ function init() {
 
   const bulletPhysics = physics.createGroup();
   
-  physics.collide(shipPhysics, planetsPhysics, function(ship, planet) {
+  physics.collide(players, planets, function(ship, planet) {
     //console.log("ship hit planet");
-    //ship.obj.position.x = 700;
-    //ship.obj.position.y = 700;
-    //ship.obj.velocity.x = 0;
-    //ship.obj.velocity.y = 0;
-    //ship.obj.rotationDegrees = 0;
+    ship.position.x = 800;
+    ship.position.y = 800;
+    ship.velocity.x = 0;
+    ship.velocity.y = 0;
+    ship.rotationDegrees = 0;
   });
 
-  physics.collide(bulletPhysics, planetsPhysics, function(ship, planet) {
-    //console.log("bullet hit planet");
-  });
+  //physics.collide(bulletPhysics, planetsPhysics, function(ship, planet) {
+  //  //console.log("bullet hit planet");
+  //});
   
   //const rotationStep = 5.0;
   const FULL_THRUST = 0.1;
@@ -213,12 +219,16 @@ function init() {
 
     //console.log(elapsed);
 
-    if (players[0].thrustersOn) {
-      shipPhysics.accelerateForward(FULL_THRUST);
-    }
-
-    // TODO: handle per player
+        // TODO: handle per player
     players.forEach(function(player, i) {
+
+      if (player.thrustersOn) {
+        physics.accelerateForward({
+          object: player,
+          acceleration: FULL_THRUST
+        });
+      }
+
       if (player.firing) {
         const bulletElapsed = timeNow - player.timeLastBullet;
         if (bulletElapsed > bulletDelay) {

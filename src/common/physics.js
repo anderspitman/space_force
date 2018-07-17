@@ -40,14 +40,6 @@ class PhysicsObject {
     this.positioning = value;
     return this;
   }
-
-  accelerateForward(acceleration) {
-    const adjustedRotation =
-      this.obj.rotationDegrees + this.obj.initialRotationDegrees;
-    const unitVelocity = unitVectorForAngleDegrees(adjustedRotation);
-    this.obj.velocity.x += unitVelocity.x * acceleration;
-    this.obj.velocity.y += unitVelocity.y * acceleration;
-  }
 }
 PhysicsObject.nextId = 0;
 
@@ -84,20 +76,31 @@ class PhysicsEngine {
     return new PhysicsGroup();
   }
 
-  collide(a, b, callback) {
-    if (!(a instanceof PhysicsObject || a instanceof PhysicsGroup) ||
-        !(b instanceof PhysicsObject || b instanceof PhysicsGroup)) {
-      throw "Invalid type";
+  accelerateForward({ object, acceleration }) {
+
+    const obj = object;
+
+    if (obj.velocity === undefined || obj.rotationDegrees === undefined ||
+        obj.initialRotationDegrees === undefined) {
+      throw "object doesn't have necessary attributes for acceleration";
     }
 
+    const adjustedRotation =
+      obj.rotationDegrees + obj.initialRotationDegrees;
+    const unitVelocity = unitVectorForAngleDegrees(adjustedRotation);
+    obj.velocity.x += unitVelocity.x * acceleration;
+    obj.velocity.y += unitVelocity.y * acceleration;
+  }
+
+  collide(a, b, callback) {
     let setA = [a];
-    if (a instanceof PhysicsGroup) {
-      setA = a.getMembers();
+    if (Array.isArray(a)) {
+      setA = a;
     }
 
     let setB = [b];
-    if (b instanceof PhysicsGroup) {
-      setB = b.getMembers();
+    if (Array.isArray(b)) {
+      setB = b;
     }
 
     this.collisionSets.push({
@@ -106,6 +109,29 @@ class PhysicsEngine {
       b: setB,
     });
   }
+
+  //collide(a, b, callback) {
+  //  if (!(a instanceof PhysicsObject || a instanceof PhysicsGroup) ||
+  //      !(b instanceof PhysicsObject || b instanceof PhysicsGroup)) {
+  //    throw "Invalid type";
+  //  }
+
+  //  let setA = [a];
+  //  if (a instanceof PhysicsGroup) {
+  //    setA = a.getMembers();
+  //  }
+
+  //  let setB = [b];
+  //  if (b instanceof PhysicsGroup) {
+  //    setB = b.getMembers();
+  //  }
+
+  //  this.collisionSets.push({
+  //    callback,
+  //    a: setA,
+  //    b: setB,
+  //  });
+  //}
 
   tick() {
     const timeStartTick = timeNowSeconds();
@@ -178,8 +204,8 @@ class PhysicsEngine {
   checkCollisionSet(set) {
     for (let a of set.a) {
       for (let b of set.b) {
-        const aPos = new Vector2(a.obj.position);
-        const bPos = new Vector2(b.obj.position);
+        const aPos = new Vector2(a.position);
+        const bPos = new Vector2(b.position);
         const distance = aPos.disanceTo(bPos);
         const collisionDistance = a.bounds.radius + b.bounds.radius;
 
