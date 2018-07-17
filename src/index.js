@@ -21,6 +21,8 @@ class StateService {
 
     const self = this;
 
+    this.timeLastMessage = timeNowSeconds();
+
     this._ready = new Promise(function(resolve, reject) {
       const hostname = window.location.hostname;
       const websocketPort = 8081;
@@ -29,7 +31,7 @@ class StateService {
       self._ws = new WebSocket(websocketString);
       self._ws.onopen = function() {
         self._ws.onmessage = function(message) {
-
+          
           self.state = JSON.parse(message.data);
           self._ws.onmessage = self._onMessage.bind(self);
 
@@ -62,6 +64,12 @@ class StateService {
   }
 
   _onMessage(message) {
+    const timeNow = timeNowSeconds();
+    const elapsed = this.timeLastMessage - timeNow;
+    this.timeLastMessage = timeNow;
+
+    //console.log(elapsed);
+
     this.onStateChanged(JSON.parse(message.data));
   }
 }

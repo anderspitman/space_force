@@ -15,17 +15,45 @@ const KEY_SPACE = 32;
 
 const keys = {};
 
-const wss = new WebSocket.Server({ port: 8081 });
+const wss = new WebSocket.Server({
+  port: 8081,
+  //clientTracking: true,
+});
+
+let gWs;
 
 let firstPlayer = true;
 
-wss.on('connection', function connection(ws) {
+wss.on('connection', function connection(ws, req) {
+
+  ws.on('message', function incoming(message) {
+
+    const data = JSON.parse(message);
+
+    switch (data.type) {
+      case 'key-down':
+        keys[data.keyCode] = true;
+        console.log(keys);
+        break;
+      case 'key-up':
+        keys[data.keyCode] = false;
+        console.log(keys);
+        break;
+      default:
+        console.log("sending scene update");
+        ws.send(JSON.stringify(scene));
+        break;
+    }
+  });
+
   if (firstPlayer) {
-    main(ws);
+    init();
   }
 });
 
-function main(ws) {
+function init() {
+
+  firstPlayer = false;
 
   const team1Color = 'blue';
   const team2Color = 'yellow';
@@ -150,32 +178,19 @@ function main(ws) {
   physics.collide(bulletPhysics, planetsPhysics, function(ship, planet) {
     //console.log("bullet hit planet");
   });
-
-
-  ws.on('message', function incoming(message) {
-
-    const data = JSON.parse(message);
-
-    switch (data.type) {
-      case 'key-down':
-        keys[data.keyCode] = true;
-        console.log(keys);
-        break;
-      case 'key-up':
-        keys[data.keyCode] = false;
-        console.log(keys);
-        break;
-      default:
-        console.log("sending scene update");
-        ws.send(JSON.stringify(scene));
-        break;
-    }
-  });
-
+  
   const rotationStep = 5.0;
   const FULL_THRUST = 0.1;
 
+  let timeLastMessage = 0;
+
   setInterval(function() {
+
+    const timeNow = timeNowSeconds();
+    const elapsed = timeLastMessage - timeNow;
+    timeLastMessage = timeNow;
+
+    //console.log(elapsed);
 
     if (keys[KEY_LEFT]) {
       playerShip.rotationDegrees += rotationStep;
@@ -200,7 +215,7 @@ function main(ws) {
     });
 
   // TODO: decouple simulation time from movement speed of objects
-  }, 16);
+  }, 16.667);
 }
 
 function fireBullet() {
@@ -232,3 +247,7 @@ function fireBullet() {
   bulletPhysics.add(phys);
 }
 
+function timeNowSeconds() {
+  const time = Date.now() / 1000;
+  return time;
+}
