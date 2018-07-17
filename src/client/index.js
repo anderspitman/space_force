@@ -1,17 +1,17 @@
 //import { Context } from 'vektar';
 // TODO: Currently expecting vektar to be available locally to speed
 // development
-import { Vector2, unitVectorForAngleDegrees } from './common/math';
-import { Context } from '../lib/vektar/src/index';
-import { Game } from './game';
+import { Vector2, unitVectorForAngleDegrees } from '../common/math';
+import { Context } from '../../lib/vektar/src/index';
+//import { Game } from './game';
 import {
   shipDescriptor,
   planetDescriptor,
   boundingAreaDescriptor,
   bulletDescriptor,
-} from './common/primitives';
-import { PhysicsEngine } from './common/physics';
-import { Camera } from './camera';
+} from '../common/primitives';
+import { PhysicsEngine } from '../common/physics';
+import { Camera } from '../camera';
 
 let firstRun = true;
 
@@ -89,7 +89,7 @@ function main(initialState) {
     state = newState;
   };
 
-  const game = new Game();
+  //const game = new Game();
 
   const worldWidth = 10000;
   const worldHeight = 10000;
