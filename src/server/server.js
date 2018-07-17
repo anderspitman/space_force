@@ -58,6 +58,8 @@ function init() {
   const team1Color = 'blue';
   const team2Color = 'yellow';
 
+  const players = [];
+
   const player1 = {
     position: {
       x: 700,
@@ -74,6 +76,7 @@ function init() {
     thrustersOn: false,
     visible: true,
   };
+  players.push(player1);
 
   const planet1 = {
     position: {
@@ -116,9 +119,7 @@ function init() {
   const state = [
     {
       primitiveId: 'Ship',
-      instances: [
-        player1 
-      ]
+      instances: players,
     },
     {
       primitiveId: 'Planet',
@@ -204,7 +205,7 @@ function init() {
     if (keys[KEY_SPACE]) {
       const bulletElapsed = timeNow - timeLastBullet;
       if (bulletElapsed > bulletDelay) {
-        fireBullet();
+        fireBullet(0);
         timeLastBullet = timeNow;
       }
     }
@@ -227,18 +228,19 @@ function init() {
   // TODO: decouple simulation time from movement speed of objects
   }, 16.667);
 
-  function fireBullet() {
+  function fireBullet(playerId) {
     const bulletSpeed = 5;
     const angle =
-      player1.initialRotationDegrees + player1.rotationDegrees;
+      players[playerId].initialRotationDegrees +
+      players[playerId].rotationDegrees;
     const unitVelocity = math.unitVectorForAngleDegrees(angle);
     const velocity = unitVelocity.scaledBy(bulletSpeed)
-      .add(player1.velocity);
+      .add(players[playerId].velocity);
 
     const newBullet = {
       position: {
-        x: player1.position.x,
-        y: player1.position.y,
+        x: players[playerId].position.x,
+        y: players[playerId].position.y,
       },
       velocity: {
         x: velocity.x,
