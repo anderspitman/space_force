@@ -60,6 +60,7 @@ wss.on('connection', function connection(ws, req) {
     scale: 1.0,
     color: colors[nextPlayerId],
     initialRotationDegrees: 90,
+    thrust: 0,
     thrustersOn: false,
     visible: true,
     timeLastBullet: 0,
@@ -71,6 +72,7 @@ wss.on('connection', function connection(ws, req) {
     },
     positioning: 'dynamic',
     hasGravity: true,
+    //hasGravity: false,
     mass: 10,
   });
 
@@ -84,8 +86,8 @@ wss.on('connection', function connection(ws, req) {
       case 'set-rotation':
         players[data.playerId].rotation = data.rotation;
         break;
-      case 'set-thrusters-on':
-        players[data.playerId].thrustersOn = data.thrustersOn;
+      case 'set-thrust':
+        players[data.playerId].thrust = data.thrust;
         break;
       case 'set-firing':
         players[data.playerId].firing = data.firing;
@@ -215,10 +217,11 @@ function init() {
 
     players.forEach(function(player, i) {
 
+      player.thrustersOn = player.thrust > 0;
       if (player.thrustersOn) {
         physics.accelerateForward({
           object: player,
-          acceleration: FULL_THRUST
+          acceleration: player.thrust * FULL_THRUST
         });
       }
 

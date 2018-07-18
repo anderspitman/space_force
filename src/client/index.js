@@ -76,10 +76,10 @@ class StateService {
     });
   }
 
-  setThrustersOn(thrustersOn) {
+  setThrust(thrust) {
     this._send({
-      type: 'set-thrusters-on',
-      thrustersOn, 
+      type: 'set-thrust',
+      thrust, 
     });
   }
 
@@ -186,6 +186,7 @@ function main(initialState) {
     let rotation = 0.0;
     let thrust = 0.0;
 
+    // TODO: optimize this so it's not sending updates when nothing has changed
     if (keys[KEY_LEFT]) {
       stateService.setRotation(1.0);
     }
@@ -196,22 +197,20 @@ function main(initialState) {
       stateService.setRotation(0.0);
     }
 
-    stateService.setThrustersOn(keys[KEY_UP]);
+    if (keys[KEY_UP]) {
+      stateService.setThrust(1.0);
+    }
+    else {
+      stateService.setThrust(0.0);
+    }
     stateService.setFiring(keys[KEY_SPACE]);
 
-    //const gp = gamepads[0];
-    //if (gp) {
-    //  rotation = -gp.axes[LEFT_ANALOG_X_INDEX] * rotationStep;
-    //  thrust = -gp.axes[RIGHT_ANALOG_Y_INDEX] * FULL_THRUST;
-    //  if (gp.buttons[5].pressed) {
-    //    fireBullet();
-    //  }
-    //}
-    //playerShip.rotationDegrees += rotation;
-    //playerShip.thrustersOn = keys[KEY_UP] || Math.abs(thrust) > 0.001;
-    //if (Math.abs(thrust) > 0.001) {
-    //  shipPhysics.accelerateForward(thrust);
-    //}
+    const gp = gamepads[0];
+    if (gp) {
+      stateService.setRotation(-gp.axes[LEFT_ANALOG_X_INDEX]);
+      stateService.setThrust(-gp.axes[RIGHT_ANALOG_Y_INDEX]);
+      stateService.setFiring(gp.buttons[5].pressed);
+    }
 
     const playerShip = state[0].instances[stateService.getPlayerId()];
     camera.setCenterPosition(playerShip.position);
