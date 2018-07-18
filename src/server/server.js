@@ -27,6 +27,8 @@ let firstPlayer = true;
 let nextPlayerId = 0;
 const playerConnections = {};
 
+const bulletLifeSeconds = 2;
+
 const colors = [
   'blue',
   'orange',
@@ -187,6 +189,8 @@ function init() {
 
     player.health -= 10;
 
+    console.log(player.health);
+
     if (player.health <= 0) {
       //const index = players.indexOf(player);
       //players.splice(index, 1);
@@ -198,8 +202,8 @@ function init() {
       player.rotationDegrees = 0;
     }
 
-    //const bulletIndex = bullets.indexOf(bullet);
-    //bullets.splice(bulletIndex, 1);
+    const bulletIndex = bullets.indexOf(bullet);
+    bullets.splice(bulletIndex, 1);
   });
   
   //const rotationStep = 5.0;
@@ -244,6 +248,8 @@ function init() {
       }
     });
 
+    checkBulletLifetimes();
+
   // TODO: decouple simulation time from movement speed of objects
   }, 16.667);
 
@@ -272,9 +278,28 @@ function init() {
       hasGravity: false,
       positioning: 'dynamic',
       bounds: bulletBounds,
+      spawnTime: timeNowSeconds(),
     };
 
     bullets.push(newBullet);
+  }
+
+  function checkBulletLifetimes() {
+    const timeNow = timeNowSeconds();
+
+    const removeList = [];
+
+    bullets.forEach(function(bullet, i) {
+      const beenAliveFor = timeNow - bullet.spawnTime;
+
+      if (beenAliveFor > bulletLifeSeconds) {
+        removeList.push(i);
+      }
+    });
+
+    for (let i of removeList) {
+      bullets.splice(i, 1);
+    }
   }
 }
 
