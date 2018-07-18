@@ -123,6 +123,7 @@ function init() {
     color: colors[0],
     positioning: 'static',
     mass: 200,
+    bounds: planetBounds,
   };
 
   const planet2 = {
@@ -137,6 +138,7 @@ function init() {
     color: colors[2],
     positioning: 'static',
     mass: 400,
+    bounds: planetBounds,
   };
 
   const planets = [
@@ -164,17 +166,8 @@ function init() {
     },
   ];
 
-  // TODO: remove this duplication
-  planet1.bounds = planetBounds;
-  planet2.bounds = planetBounds;
-
   physics.collide(players, planets, function(ship, planet) {
     //console.log("ship hit planet");
-    //ship.position.x = 800;
-    //ship.position.y = 800;
-    //ship.velocity.x = 0;
-    //ship.velocity.y = 0;
-    //ship.rotationDegrees = 0;
   });
 
   physics.collide(bullets, planets, function(ship, planet) {
@@ -189,7 +182,7 @@ function init() {
 
     player.health -= 10;
 
-    console.log(player.health);
+    console.log("Player " + player.id + " health: " + player.health);
 
     if (player.health <= 0) {
       //const index = players.indexOf(player);
@@ -220,7 +213,6 @@ function init() {
 
     //console.log(elapsed);
 
-        // TODO: handle per player
     players.forEach(function(player, i) {
 
       if (player.thrustersOn) {
@@ -254,7 +246,7 @@ function init() {
   }, 16.667);
 
   function fireBullet(player) {
-    const bulletSpeed = 5;
+    const bulletSpeed = 8;
     const angle =
       player.initialRotationDegrees + player.rotationDegrees;
     const unitVelocity = unitVectorForAngleDegrees(angle);
