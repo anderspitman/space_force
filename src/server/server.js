@@ -7,6 +7,7 @@ const {
   boundingAreaDescriptor,
   bulletDescriptor,
 } = require('../common/primitives');
+const { PojoFlowServer } = require('../../lib/pojo_flow/src/server');
 
 const KEY_RIGHT = 39;
 const KEY_UP = 38;
@@ -16,6 +17,12 @@ const physics = new PhysicsEngine();
 const shipBounds = physics.calculateBoundingArea(shipDescriptor);
 const planetBounds = physics.calculateBoundingArea(planetDescriptor);
 const bulletBounds = physics.calculateBoundingArea(bulletDescriptor);
+
+const pjfServer = new PojoFlowServer();
+
+pjfServer.onNewClient(function() {
+  //console.log("New client");
+});
 
 const wss = new WebSocket.Server({
   port: 8081,
@@ -72,6 +79,7 @@ wss.on('connection', function connection(ws, req) {
     hasGravity: true,
     //hasGravity: false,
     mass: 10,
+    firing: false,
   });
 
   nextPlayerId++;
@@ -241,9 +249,12 @@ function init() {
       }
     });
 
+    pjfServer.update(state);
+
     checkBulletLifetimes();
 
   // TODO: decouple simulation time from movement speed of objects
+  //}, 1000);
   }, 16.667);
 
   function fireBullet(player) {

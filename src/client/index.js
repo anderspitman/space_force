@@ -3,6 +3,7 @@
 // development
 import { Vector2, unitVectorForAngleDegrees } from '../common/math';
 import { Context } from '../../lib/vektar/src/index';
+import { PojoFlowClient } from '../../lib/pojo_flow/src/client';
 //import { Game } from './game';
 import {
   shipDescriptor,
@@ -108,24 +109,27 @@ class StateService {
 
     //console.log(elapsed);
 
-    this.onStateChanged(JSON.parse(message.data));
+    //this.onStateChanged(JSON.parse(message.data));
   }
 }
 
 
 const stateService = new StateService();
 
-stateService.whenReady().then(function(state) {
-  main(state);
+const pjfClient = new PojoFlowClient();
+
+let state;
+
+pjfClient.onUpdate(function(data) {
+  state = data;
+  //console.log(state);
 });
 
-function main(initialState) {
+pjfClient.waitForFirstUpdate().then(function() {
+  main();
+});
 
-  let state = initialState;
-
-  stateService.onStateChanged = function(newState) {
-    state = newState;
-  };
+function main() {
 
   //const game = new Game();
 
@@ -216,7 +220,13 @@ function main(initialState) {
     else {
       stateService.setThrust(0.0);
     }
-    stateService.setFiring(keys[KEY_SPACE]);
+
+    if (keys[KEY_SPACE]) {
+      stateService.setFiring(true);
+    }
+    else {
+      stateService.setFiring(false);
+    }
 
     const gp = gamepads[0];
     if (gp) {
