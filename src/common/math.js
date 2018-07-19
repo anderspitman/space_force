@@ -51,8 +51,43 @@ function unitVectorForAngleDegrees(angle) {
   return new Vector2({ x: rotationX, y: rotationY });
 }
 
+function mean(array) {
+  let sum = 0;
+  for (let val of array) {
+    sum += val;
+  }
+  return sum / array.length;
+}
+
+function basicStats(array) {
+  let sum = 0;
+  let min = Number.MAX_SAFE_INTEGER;
+  let max = Number.MIN_SAFE_INTEGER;
+
+  for (let val of array) {
+    sum += val;
+
+    if (val < min) {
+      min = val;
+    }
+    if (val > max) {
+      max = val;
+    }
+  }
+
+  const mean = sum / array.length;
+
+  return {
+    min,
+    max,
+    mean,
+  };
+}
+
 module.exports = {
   DEGREES_TO_RADIANS,
   Vector2,
   unitVectorForAngleDegrees,
+  mean,
+  basicStats,
 };

@@ -1,8 +1,7 @@
 //import { Context } from 'vektar';
 // TODO: Currently expecting vektar to be available locally to speed
 // development
-import { Vector2, unitVectorForAngleDegrees } from '../common/math';
-import { printObj, deepCopy } from '../common/utils';
+import { printObj } from '../common/utils';
 import { Context } from '../../lib/vektar/src/index';
 import { PojoFlowClient } from '../../lib/pojo_flow/src/client';
 //import { Game } from './game';
@@ -15,13 +14,12 @@ import {
 import { PhysicsEngine } from '../common/physics';
 import { Camera } from '../camera';
 import { StateService } from './state_service';
-import { timeNowSeconds } from '../common/utils';
+import { TimingStats } from '../common/timing_stats';
 
 const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 const KEY_UP = 38;
 const KEY_SPACE = 32;
-
 
 fetch('config.json').then(function(response) {
   return response.json();
@@ -43,7 +41,12 @@ fetch('config.json').then(function(response) {
 
   const gameData = {};
 
+  const messageTimeStats = new TimingStats({
+    numSamples: 1000,
+  });
+
   pjfClient.onUpdate(function(data) {
+    messageTimeStats.addAutoPrint();
     gameData.playerIdMap = data.playerIdMap;
     gameData.state = data.state;
   });
@@ -56,6 +59,10 @@ fetch('config.json').then(function(response) {
 function run(gameData, stateService) {
 
   //const game = new Game();
+
+  const frameTimeStats = new TimingStats({
+    numSamples: 100,
+  });
 
   const worldWidth = 10000;
   const worldHeight = 10000;
@@ -114,15 +121,9 @@ function run(gameData, stateService) {
     keys[e.keyCode] = true;
   });
 
-  let timeLastStep = timeNowSeconds();
-
   function step() {
 
-    const timeNow = timeNowSeconds();
-    const elapsed = timeNow - timeLastStep;
-    timeLastStep = timeNow;
-
-    //console.log(elapsed);
+    //frameTimeStats.addAutoPrint();
 
     let rotation = 0.0;
     let thrust = 0.0;

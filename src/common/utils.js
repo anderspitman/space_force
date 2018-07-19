@@ -6,11 +6,9 @@ function deepCopy(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-const isBrowser = this.window === this;
-
 let timeNowSeconds;
 
-if (isBrowser) {
+if (isBrowser()) {
   timeNowSeconds = function() {
     const time = performance.now() / 1000;
     return time;
@@ -20,6 +18,10 @@ else {
   timeNowSeconds = function() {
     return 0;
   }
+}
+
+function isBrowser() {
+  return true;
 }
 
 module.exports = {
