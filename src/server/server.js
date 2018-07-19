@@ -243,12 +243,6 @@ function init() {
     // run physics every 10ms, but only send updates every 100
     physics.tick({ state });
 
-    wss.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(state));
-      }
-    });
-
     pjfServer.update(state);
 
     checkBulletLifetimes();
