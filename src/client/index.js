@@ -42,7 +42,7 @@ fetch('config.json').then(function(response) {
   const gameData = {};
 
   const messageTimeStats = new TimingStats({
-    numSamples: 1000,
+    numSamples: 100,
   });
 
   pjfClient.onUpdate(function(data) {

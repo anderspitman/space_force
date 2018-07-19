@@ -273,7 +273,7 @@ function init() {
 
   // TODO: decouple simulation time from movement speed of objects
   //}, 3000);
-  }, 16.667);
+  //}, 16.667);
 
   function fireBullet(player) {
     const bulletSpeed = 8;
