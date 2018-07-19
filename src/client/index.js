@@ -15,6 +15,7 @@ import {
 import { PhysicsEngine } from '../common/physics';
 import { Camera } from '../camera';
 import { StateService } from './state_service';
+import { timeNowSeconds } from '../common/utils';
 
 const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
@@ -30,6 +31,7 @@ fetch('config.json').then(function(response) {
   let firstRun = true;
 
   const host = config.host;
+  //const host = '127.0.0.1';
 
   const stateService = new StateService({
     host,
@@ -167,10 +169,4 @@ fetch('config.json').then(function(response) {
     }
     requestAnimationFrame(step);
   }
-
-  function timeNowSeconds() {
-    const time = performance.now() / 1000;
-    return time;
-  }
-
 });
