@@ -41,132 +41,132 @@ fetch('config.json').then(function(response) {
     host,
   });
 
-  let state;
-  let playerIdMap;
+  const gameData = {};
 
   pjfClient.onUpdate(function(data) {
-    playerIdMap = data.playerIdMap;
-    state = data.state;
-    //console.log(state);
+    gameData.playerIdMap = data.playerIdMap;
+    gameData.state = data.state;
   });
 
   pjfClient.waitForFirstUpdate().then(function() {
-    main();
+    run(gameData, stateService);
+  });
+});
+
+function run(gameData, stateService) {
+
+  //const game = new Game();
+
+  const worldWidth = 10000;
+  const worldHeight = 10000;
+
+  const ctx = new Context({
+    domElementId: 'root',
+    canvasSize: {
+      width: worldWidth,
+      height: worldHeight,
+    }
   });
 
-  function main() {
+  ctx.definePrimitive({ primitiveId: 'Ship', descriptor: shipDescriptor });
+  ctx.definePrimitive({
+    primitiveId: 'RadarBuilding',
+    descriptor: planetDescriptor
+  });
+  ctx.definePrimitive({ primitiveId: 'Planet', descriptor: planetDescriptor });
+  ctx.definePrimitive({ primitiveId: 'Bullet', descriptor: bulletDescriptor });
 
-    //const game = new Game();
-
-    const worldWidth = 10000;
-    const worldHeight = 10000;
-
-    const ctx = new Context({
-      domElementId: 'root',
-      canvasSize: {
-        width: worldWidth,
-        height: worldHeight,
-      }
-    });
-
-    ctx.definePrimitive({ primitiveId: 'Ship', descriptor: shipDescriptor });
-    ctx.definePrimitive({
-      primitiveId: 'RadarBuilding',
-      descriptor: planetDescriptor
-    });
-    ctx.definePrimitive({ primitiveId: 'Planet', descriptor: planetDescriptor });
-    ctx.definePrimitive({ primitiveId: 'Bullet', descriptor: bulletDescriptor });
-
-    ctx.setBackgroundColor('black');
+  ctx.setBackgroundColor('black');
 
 
-    const camera = new Camera(ctx);
+  const camera = new Camera(ctx);
 
-    var gamepads = {};
+  var gamepads = {};
 
-    function gamepadHandler(event, connecting) {
-      var gamepad = event.gamepad;
-      // Note:
-      // gamepad === navigator.getGamepads()[gamepad.index]
+  function gamepadHandler(event, connecting) {
+    var gamepad = event.gamepad;
+    // Note:
+    // gamepad === navigator.getGamepads()[gamepad.index]
 
-      if (connecting) {
-        gamepads[gamepad.index] = gamepad;
-      } else {
-        delete gamepads[gamepad.index];
-      }
+    if (connecting) {
+      gamepads[gamepad.index] = gamepad;
+    } else {
+      delete gamepads[gamepad.index];
+    }
+  }
+
+  window.addEventListener("gamepadconnected", function(e) {
+    gamepadHandler(e, true);
+  }, false);
+  window.addEventListener("gamepaddisconnected", function(e) {
+    gamepadHandler(e, false);
+  }, false);
+
+  const LEFT_ANALOG_X_INDEX = 0;
+  const RIGHT_ANALOG_Y_INDEX = 3;
+
+  // handle keyboard input
+  const keys = {};
+  document.addEventListener('keyup', function(e) {
+    keys[e.keyCode] = false;
+  });
+  document.addEventListener('keydown', function(e) {
+    keys[e.keyCode] = true;
+  });
+
+  let timeLastStep = timeNowSeconds();
+
+  function step() {
+
+    const timeNow = timeNowSeconds();
+    const elapsed = timeNow - timeLastStep;
+    timeLastStep = timeNow;
+
+    //console.log(elapsed);
+
+    let rotation = 0.0;
+    let thrust = 0.0;
+
+    // TODO: optimize this so it's not sending updates when nothing has changed
+    if (keys[KEY_LEFT]) {
+      stateService.setRotation(1.0);
+    }
+    else if (keys[KEY_RIGHT]) {
+      stateService.setRotation(-1.0);
+    }
+    else {
+      stateService.setRotation(0.0);
     }
 
-    window.addEventListener("gamepadconnected", function(e) {
-      gamepadHandler(e, true);
-    }, false);
-    window.addEventListener("gamepaddisconnected", function(e) {
-      gamepadHandler(e, false);
-    }, false);
-
-    const LEFT_ANALOG_X_INDEX = 0;
-    const RIGHT_ANALOG_Y_INDEX = 3;
-
-    // handle keyboard input
-    const keys = {};
-    document.addEventListener('keyup', function(e) {
-      keys[e.keyCode] = false;
-    });
-    document.addEventListener('keydown', function(e) {
-      keys[e.keyCode] = true;
-    });
-
-    let timeLastStep = timeNowSeconds();
-
-    function step() {
-
-      const timeNow = timeNowSeconds();
-      const elapsed = timeNow - timeLastStep;
-      timeLastStep = timeNow;
-
-      //console.log(elapsed);
-
-      let rotation = 0.0;
-      let thrust = 0.0;
-
-      // TODO: optimize this so it's not sending updates when nothing has changed
-      if (keys[KEY_LEFT]) {
-        stateService.setRotation(1.0);
-      }
-      else if (keys[KEY_RIGHT]) {
-        stateService.setRotation(-1.0);
-      }
-      else {
-        stateService.setRotation(0.0);
-      }
-
-      if (keys[KEY_UP]) {
-        stateService.setThrust(1.0);
-      }
-      else {
-        stateService.setThrust(0.0);
-      }
-
-      if (keys[KEY_SPACE]) {
-        stateService.setFiring(true);
-      }
-      else {
-        stateService.setFiring(false);
-      }
-
-      const gp = gamepads[0];
-      if (gp) {
-        stateService.setRotation(-gp.axes[LEFT_ANALOG_X_INDEX]);
-        stateService.setThrust(-gp.axes[RIGHT_ANALOG_Y_INDEX]);
-        stateService.setFiring(gp.buttons[5].pressed);
-      }
-
-      const playerShip =
-        state[0].instances[playerIdMap[stateService.getPlayerId()]];
-      camera.setCenterPosition(playerShip.position);
-
-      ctx.render({ scene: state });
-      requestAnimationFrame(step);
+    if (keys[KEY_UP]) {
+      stateService.setThrust(1.0);
     }
+    else {
+      stateService.setThrust(0.0);
+    }
+
+    if (keys[KEY_SPACE]) {
+      stateService.setFiring(true);
+    }
+    else {
+      stateService.setFiring(false);
+    }
+
+    const gp = gamepads[0];
+    if (gp) {
+      stateService.setRotation(-gp.axes[LEFT_ANALOG_X_INDEX]);
+      stateService.setThrust(-gp.axes[RIGHT_ANALOG_Y_INDEX]);
+      stateService.setFiring(gp.buttons[5].pressed);
+    }
+
+    const state = gameData.state;
+    const playerIdMap = gameData.playerIdMap;
+    const playerShip =
+      state[0].instances[playerIdMap[stateService.getPlayerId()]];
+    camera.setCenterPosition(playerShip.position);
+
+    ctx.render({ scene: gameData.state });
     requestAnimationFrame(step);
   }
-});
+  requestAnimationFrame(step);
+}
