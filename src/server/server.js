@@ -8,6 +8,7 @@ const {
   bulletDescriptor,
 } = require('../common/primitives');
 const { PojoFlowServer } = require('../../lib/pojo_flow/src/server');
+const { printObj } = require('../common/utils');
 
 const KEY_RIGHT = 39;
 const KEY_UP = 38;
@@ -42,19 +43,30 @@ const colors = [
   '#f781bf'
 ];
 
+const gameData = {
+  playerIdMap: {},
+  state: {},
+};
+
 const players = [];
 
 wss.on('connection', function connection(ws, req) {
 
+
+  const playerId = nextPlayerId;
+  nextPlayerId++;
+
+  console.log("new player " + playerId);
+
   // add new player
-  playerConnections[nextPlayerId] = ws;
+  playerConnections[playerId] = ws;
   const initPlayerMessage = {
     type: 'playerId',
-    playerId: nextPlayerId,
+    playerId,
   };
 
   players.push({
-    id: nextPlayerId,
+    id: playerId,
     position: {
       x: Math.random() * 700,
       y: Math.random() * 700,
@@ -63,7 +75,7 @@ wss.on('connection', function connection(ws, req) {
     rotationDegrees: 0,
     rotation: 0,
     scale: 1.0,
-    color: nextPlayerId >= colors.length ? colors[0] : colors[nextPlayerId],
+    color: playerId >= colors.length ? colors[0] : colors[playerId],
     initialRotationDegrees: 90,
     thrust: 0,
     thrustersOn: false,
@@ -82,7 +94,8 @@ wss.on('connection', function connection(ws, req) {
     firing: false,
   });
 
-  nextPlayerId++;
+  const playerIndex = players.length - 1;
+  gameData.playerIdMap[playerId] = playerIndex;
 
   ws.on('message', function incoming(message) {
 
@@ -90,23 +103,31 @@ wss.on('connection', function connection(ws, req) {
 
     switch (data.type) {
       case 'set-rotation':
-        players[data.playerId].rotation = data.rotation;
+        players[gameData.playerIdMap[data.playerId]].rotation = data.rotation;
         break;
       case 'set-thrust':
-        players[data.playerId].thrust = data.thrust;
+        players[gameData.playerIdMap[data.playerId]].thrust = data.thrust;
         break;
       case 'set-firing':
-        players[data.playerId].firing = data.firing;
+        players[gameData.playerIdMap[data.playerId]].firing = data.firing;
         break;
       default:
-        console.log("sending state update");
-        ws.send(JSON.stringify(state));
+        throw "Invalid command";
         break;
     }
   });
 
   ws.on('close', function() {
-    // TODO: delete from list
+
+    console.log("remove player " + playerId);
+
+    players.splice(playerIndex, 1);
+
+    gameData.playerIdMap = {};
+
+    players.forEach(function(player, i) {
+      gameData.playerIdMap[player.id] = i;
+    });
   });
 
   ws.send(JSON.stringify(initPlayerMessage));
@@ -156,6 +177,7 @@ function init() {
 
   const bullets = [];
 
+
   const state = [
     {
       primitiveId: 'Ship',
@@ -173,6 +195,8 @@ function init() {
       instances: bullets,
     },
   ];
+
+  gameData.state = state;
 
   physics.collide(players, planets, function(ship, planet) {
     //console.log("ship hit planet");
@@ -243,12 +267,12 @@ function init() {
     // run physics every 10ms, but only send updates every 100
     physics.tick({ state });
 
-    pjfServer.update(state);
+    pjfServer.update(gameData);
 
     checkBulletLifetimes();
 
   // TODO: decouple simulation time from movement speed of objects
-  //}, 1000);
+  //}, 3000);
   }, 16.667);
 
   function fireBullet(player) {

@@ -2,6 +2,7 @@
 // TODO: Currently expecting vektar to be available locally to speed
 // development
 import { Vector2, unitVectorForAngleDegrees } from '../common/math';
+import { printObj, deepCopy } from '../common/utils';
 import { Context } from '../../lib/vektar/src/index';
 import { PojoFlowClient } from '../../lib/pojo_flow/src/client';
 //import { Game } from './game';
@@ -119,9 +120,11 @@ const stateService = new StateService();
 const pjfClient = new PojoFlowClient();
 
 let state;
+let playerIdMap;
 
 pjfClient.onUpdate(function(data) {
-  state = data;
+  playerIdMap = data.playerIdMap;
+  state = data.state;
   //console.log(state);
 });
 
@@ -235,7 +238,8 @@ function main() {
       stateService.setFiring(gp.buttons[5].pressed);
     }
 
-    const playerShip = state[0].instances[stateService.getPlayerId()];
+    const playerShip =
+      state[0].instances[playerIdMap[stateService.getPlayerId()]];
     camera.setCenterPosition(playerShip.position);
 
     ctx.render({ scene: state });
