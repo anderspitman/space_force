@@ -21,8 +21,8 @@ class PhysicsEngine {
     const adjustedRotation =
       obj.rotationDegrees + obj.initialRotationDegrees;
     const unitVelocity = unitVectorForAngleDegrees(adjustedRotation);
-    obj.velocity.x += unitVelocity.x * acceleration;
-    obj.velocity.y += unitVelocity.y * acceleration;
+    obj.velocity.x += unitVelocity.x * acceleration * this._sim_period_secs;
+    obj.velocity.y += unitVelocity.y * acceleration * this._sim_period_secs;
   }
 
   collide(a, b, callback) {
@@ -81,13 +81,17 @@ class PhysicsEngine {
                 radius: diff.getLength()
               });
 
+              if (obj.id === 0 && other.id === 1000) {
+                console.log(accelForce);
+              }
+
               const accel = accelDir.scaledBy(accelForce);
               gravityAcceleration = gravityAcceleration.add(accel);
             }
           }
 
-          obj.velocity.x += gravityAcceleration.x;
-          obj.velocity.y += gravityAcceleration.y;
+          obj.velocity.x += gravityAcceleration.x * this._sim_period_secs;
+          obj.velocity.y += gravityAcceleration.y * this._sim_period_secs;
         }
       }
 

@@ -8,13 +8,15 @@ const {
   bulletDescriptor,
 } = require('../common/primitives');
 const { PojoFlowServer } = require('../../lib/pojo_flow/src/server');
-const { printObj } = require('../common/utils');
+const { printObj, timeNowSeconds } = require('../common/utils');
+const { TimingStats } = require('../common/timing_stats');
 
 const KEY_RIGHT = 39;
 const KEY_UP = 38;
 const KEY_SPACE = 32;
 
 const SIM_PERIOD_MS = 16.66667;
+//const SIM_PERIOD_MS = 50;
 
 const physics = new PhysicsEngine({
   sim_period_ms: SIM_PERIOD_MS,
@@ -145,6 +147,7 @@ wss.on('connection', function connection(ws, req) {
 function init() {
 
   const planet1 = {
+    id: 1000,
     position: {
       x: 200,
       y: 200,
@@ -155,11 +158,12 @@ function init() {
     hasRadar: false,
     color: colors[0],
     positioning: 'static',
-    mass: 10000,
+    mass: 1500000,
     bounds: planetBounds,
   };
 
   const planet2 = {
+    id: 1001,
     position: {
       x: 500,
       y: 500,
@@ -170,7 +174,7 @@ function init() {
     hasRadar: true,
     color: colors[2],
     positioning: 'static',
-    mass: 10000,
+    mass: 1000000,
     bounds: planetBounds,
   };
 
@@ -229,19 +233,24 @@ function init() {
     bullets.splice(bulletIndex, 1);
   });
   
-  //const rotationStep = 5.0;
-  const FULL_THRUST = 6.0;
+  const FULL_THRUST_ACCELERATION = 600.0;
   const bulletDelay = 0.1;
 
   let timeLastMessage = 0;
 
+  const timeStats = new TimingStats({
+    numSamples: 10,
+  });
+
   setInterval(function() {
 
     const timeNow = timeNowSeconds();
-    const elapsed = timeNow - timeLastMessage;
-    timeLastMessage = timeNow;
 
-    //console.log(elapsed);
+    //timeStats.addAutoPrint();
+
+    //if (players[0] !== undefined) {
+    //  console.log(players[0].velocity);
+    //}
 
     players.forEach(function(player, i) {
 
@@ -249,7 +258,7 @@ function init() {
       if (player.thrustersOn) {
         physics.accelerateForward({
           object: player,
-          acceleration: player.thrust * FULL_THRUST
+          acceleration: player.thrust * FULL_THRUST_ACCELERATION
         });
       }
 
@@ -319,12 +328,6 @@ function init() {
       bullets.splice(i, 1);
     }
   }
-}
-
-// TODO: replace this with version in utils
-function timeNowSeconds() {
-  const time = Date.now() / 1000;
-  return time;
 }
 
 function respawnPlayer(player) {

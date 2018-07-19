@@ -15,13 +15,18 @@ if (isBrowser()) {
   }
 }
 else {
-  timeNowSeconds = function() {
-    return 0;
+  timeNowSeconds = function timeNowSeconds() {
+    const time = Date.now() / 1000;
+    return time;
   }
 }
 
 function isBrowser() {
-  return true;
+  return !isNode();
+}
+
+function isNode() {
+  return typeof exports === 'object' && typeof exports.nodeName !== 'string';
 }
 
 module.exports = {
