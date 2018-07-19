@@ -14,6 +14,8 @@ const KEY_RIGHT = 39;
 const KEY_UP = 38;
 const KEY_SPACE = 32;
 
+const SIM_PERIOD_MS = 10.0;
+
 const physics = new PhysicsEngine();
 const shipBounds = physics.calculateBoundingArea(shipDescriptor);
 const planetBounds = physics.calculateBoundingArea(planetDescriptor);
@@ -272,8 +274,8 @@ function init() {
     checkBulletLifetimes();
 
   // TODO: decouple simulation time from movement speed of objects
-  //}, 3000);
-  //}, 16.667);
+  //}, 100);
+  }, 16.667);
 
   function fireBullet(player) {
     const bulletSpeed = 8;
