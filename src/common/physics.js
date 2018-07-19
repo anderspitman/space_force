@@ -81,10 +81,6 @@ class PhysicsEngine {
                 radius: diff.getLength()
               });
 
-              if (obj.id === 0 && other.id === 1000) {
-                console.log(accelForce);
-              }
-
               const accel = accelDir.scaledBy(accelForce);
               gravityAcceleration = gravityAcceleration.add(accel);
             }

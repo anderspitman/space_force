@@ -158,7 +158,7 @@ function init() {
     hasRadar: false,
     color: colors[0],
     positioning: 'static',
-    mass: 1500000,
+    mass: 500000,
     bounds: planetBounds,
   };
 
@@ -174,7 +174,7 @@ function init() {
     hasRadar: true,
     color: colors[2],
     positioning: 'static',
-    mass: 1000000,
+    mass: 500000,
     bounds: planetBounds,
   };
 
@@ -233,7 +233,7 @@ function init() {
     bullets.splice(bulletIndex, 1);
   });
   
-  const FULL_THRUST_ACCELERATION = 600.0;
+  const FULL_THRUST_ACCELERATION = 300.0;
   const bulletDelay = 0.1;
 
   let timeLastMessage = 0;
@@ -246,11 +246,7 @@ function init() {
 
     const timeNow = timeNowSeconds();
 
-    //timeStats.addAutoPrint();
-
-    //if (players[0] !== undefined) {
-    //  console.log(players[0].velocity);
-    //}
+    timeStats.addAutoPrint();
 
     players.forEach(function(player, i) {
 
