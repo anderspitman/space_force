@@ -1,12 +1,12 @@
 const { Vector2, unitVectorForAngleDegrees } = require('./math');
 
-const rotationStep = 5.0;
+const rotationStepDegPerSec = 360.0;
 
 class PhysicsEngine {
 
-  constructor() {
-    this.timeLastTick = timeNowSeconds();
+  constructor({ sim_period_ms }) {
     this.collisionSets = [];
+    this._sim_period_secs = sim_period_ms / 1000.0;
   }
 
   accelerateForward({ object, acceleration }) {
@@ -44,9 +44,6 @@ class PhysicsEngine {
   }
 
   tick({ state }) {
-    const timeStartTick = timeNowSeconds();
-    const timeElapsed = timeStartTick - this.timeLastTick;
-    this.timeLastTick = timeStartTick;
 
     // TODO: This transformation feels like a hack. Maybe figure out a better
     // way to express the relationships between object types that makes sense
@@ -62,8 +59,10 @@ class PhysicsEngine {
 
       if (obj.positioning === 'dynamic') {
         // TODO: this should maybe go after the gravity is applied
-        obj.position.x += obj.velocity.x;
-        obj.position.y += obj.velocity.y;
+        obj.position.x += obj.velocity.x * this._sim_period_secs;
+        obj.position.y += obj.velocity.y * this._sim_period_secs;
+        //obj.position.x += obj.velocity.x;
+        //obj.position.y += obj.velocity.y;
 
         if (obj.hasGravity) {
 
@@ -93,15 +92,12 @@ class PhysicsEngine {
       }
 
       if (obj.rotationDegrees !== undefined && obj.rotation !== undefined) {
-        obj.rotationDegrees += obj.rotation * rotationStep;
+        obj.rotationDegrees +=
+          obj.rotation * rotationStepDegPerSec * this._sim_period_secs;
       }
     }
 
     this.checkCollisionSets();
-
-    //const tickDuration = timeNowSeconds() - timeStartTick;
-    //console.log(tickDuration);
-    //console.log(timeElapsed);
   }
 
   calculateBoundingArea(descriptor) {
@@ -234,22 +230,14 @@ class BoundingBoxCalculator {
 }
 
 function gravityForce({ mass1, mass2, radius }) {
-  const multiplier = 0.01;
   let force = (mass1 * mass2) / (radius * radius); 
   
   // TODO: should be able to remove this once the ship isn't able to
   // reach the center of the planets. It was flying off
-  if (force > 0.1) {
-    force = 0.1;
-  }
+  //if (force > 0.1) {
+  //  force = 0.1;
+  //}
   return force;
-}
-
-function timeNowSeconds() {
-  return 0.0;
-  // TODO: fix for node
-  //const time = performance.now() / 1000;
-  //return time;
 }
 
 module.exports = {

@@ -14,9 +14,11 @@ const KEY_RIGHT = 39;
 const KEY_UP = 38;
 const KEY_SPACE = 32;
 
-const SIM_PERIOD_MS = 10.0;
+const SIM_PERIOD_MS = 16.66667;
 
-const physics = new PhysicsEngine();
+const physics = new PhysicsEngine({
+  sim_period_ms: SIM_PERIOD_MS,
+});
 const shipBounds = physics.calculateBoundingArea(shipDescriptor);
 const planetBounds = physics.calculateBoundingArea(planetDescriptor);
 const bulletBounds = physics.calculateBoundingArea(bulletDescriptor);
@@ -153,7 +155,7 @@ function init() {
     hasRadar: false,
     color: colors[0],
     positioning: 'static',
-    mass: 200,
+    mass: 10000,
     bounds: planetBounds,
   };
 
@@ -168,7 +170,7 @@ function init() {
     hasRadar: true,
     color: colors[2],
     positioning: 'static',
-    mass: 400,
+    mass: 10000,
     bounds: planetBounds,
   };
 
@@ -200,12 +202,11 @@ function init() {
 
   gameData.state = state;
 
-  physics.collide(players, planets, function(ship, planet) {
-    //console.log("ship hit planet");
+  physics.collide(players, planets, function(player, planet) {
+    respawnPlayer(player);
   });
 
-  physics.collide(bullets, planets, function(ship, planet) {
-    //console.log("bullet hit planet");
+  physics.collide(bullets, planets, function(player, planet) {
   });
 
   physics.collide(bullets, players, function(bullet, player) {
@@ -221,12 +222,7 @@ function init() {
     if (player.health <= 0) {
       //const index = players.indexOf(player);
       //players.splice(index, 1);
-      player.health = 100;
-      player.position.x = 800;
-      player.position.y = 800;
-      player.velocity.x = 0;
-      player.velocity.y = 0;
-      player.rotationDegrees = 0;
+      respawnPlayer(player);
     }
 
     const bulletIndex = bullets.indexOf(bullet);
@@ -234,7 +230,7 @@ function init() {
   });
   
   //const rotationStep = 5.0;
-  const FULL_THRUST = 0.1;
+  const FULL_THRUST = 6.0;
   const bulletDelay = 0.1;
 
   let timeLastMessage = 0;
@@ -273,16 +269,14 @@ function init() {
 
     checkBulletLifetimes();
 
-  // TODO: decouple simulation time from movement speed of objects
-  //}, 100);
-  }, 16.667);
+  }, SIM_PERIOD_MS);
 
   function fireBullet(player) {
-    const bulletSpeed = 8;
+    const bulletBaseSpeed = 600;
     const angle =
       player.initialRotationDegrees + player.rotationDegrees;
     const unitVelocity = unitVectorForAngleDegrees(angle);
-    const velocity = unitVelocity.scaledBy(bulletSpeed)
+    const velocity = unitVelocity.scaledBy(bulletBaseSpeed)
       .add(player.velocity);
 
     const newBullet = {
@@ -327,7 +321,17 @@ function init() {
   }
 }
 
+// TODO: replace this with version in utils
 function timeNowSeconds() {
   const time = Date.now() / 1000;
   return time;
+}
+
+function respawnPlayer(player) {
+  player.health = 100;
+  player.position.x = Math.random() * 800;
+  player.position.y = Math.random() * 800;
+  player.velocity.x = 0;
+  player.velocity.y = 0;
+  player.rotationDegrees = 0;
 }
