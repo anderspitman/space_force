@@ -181,7 +181,15 @@ function main(initialState) {
     keys[e.keyCode] = true;
   });
 
+  let timeLastStep = timeNowSeconds();
+
   function step() {
+
+    const timeNow = timeNowSeconds();
+    const elapsed = timeNow - timeLastStep;
+    timeLastStep = timeNow;
+
+    console.log(elapsed);
 
     let rotation = 0.0;
     let thrust = 0.0;

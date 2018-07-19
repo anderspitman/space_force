@@ -56,7 +56,7 @@ wss.on('connection', function connection(ws, req) {
     rotationDegrees: 0,
     rotation: 0,
     scale: 1.0,
-    color: colors[nextPlayerId],
+    color: nextPlayerId >= colors.length ? colors[0] : colors[nextPlayerId],
     initialRotationDegrees: 90,
     thrust: 0,
     thrustersOn: false,
