@@ -18,6 +18,8 @@ const KEY_RIGHT = 39;
 const KEY_UP = 38;
 const KEY_SPACE = 32;
 
+const WEBSOCKET_STATE_OPEN = 1;
+
 let firstRun = true;
 
 class StateService {
@@ -91,9 +93,12 @@ class StateService {
   }
 
   _send(message) {
-    message.playerId = this._playerId;
-    //console.log(message);
-    this._ws.send(JSON.stringify(message));
+
+    if (this._ws.readyState === WEBSOCKET_STATE_OPEN) {
+      message.playerId = this._playerId;
+      //console.log(message);
+      this._ws.send(JSON.stringify(message));
+    }
   }
 
   _onMessage(message) {
@@ -189,7 +194,7 @@ function main(initialState) {
     const elapsed = timeNow - timeLastStep;
     timeLastStep = timeNow;
 
-    console.log(elapsed);
+    //console.log(elapsed);
 
     let rotation = 0.0;
     let thrust = 0.0;
