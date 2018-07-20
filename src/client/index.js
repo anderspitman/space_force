@@ -16,6 +16,8 @@ import { Camera } from '../camera';
 import { StateService } from './state_service';
 import { TimingStats } from '../common/timing_stats';
 
+const SIM_STEP_TIME_MS = 10;
+
 const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 const KEY_UP = 38;
@@ -59,6 +61,10 @@ fetch('config.json').then(function(response) {
 function run(gameData, stateService) {
 
   //const game = new Game();
+
+  const physics = new PhysicsEngine({
+    sim_period_ms: SIM_STEP_TIME_MS,
+  });
 
   const frameTimeStats = new TimingStats({
     numSamples: 100,
@@ -164,6 +170,10 @@ function run(gameData, stateService) {
     const playerIdMap = gameData.playerIdMap;
     const playerShip =
       state[0].instances[playerIdMap[stateService.getPlayerId()]];
+
+
+    physics.tick({ state });
+
     camera.setCenterPosition(playerShip.position);
 
     ctx.render({ scene: gameData.state });

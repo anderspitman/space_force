@@ -15,11 +15,13 @@ const KEY_RIGHT = 39;
 const KEY_UP = 38;
 const KEY_SPACE = 32;
 
-const SIM_PERIOD_MS = 16.66667;
-//const SIM_PERIOD_MS = 50;
+//const SIM_STEP_TIME_MS = 16.66667;
+const SIM_STEP_TIME_MS = 10;
+const SERVER_PERIOD_MS = 100;
+//const SERVER_PERIOD_MS = 16.6667;
 
 const physics = new PhysicsEngine({
-  sim_period_ms: SIM_PERIOD_MS,
+  sim_period_ms: SIM_STEP_TIME_MS,
 });
 const shipBounds = physics.calculateBoundingArea(shipDescriptor);
 const planetBounds = physics.calculateBoundingArea(planetDescriptor);
@@ -248,33 +250,37 @@ function init() {
 
     timeStats.addAutoPrint();
 
-    players.forEach(function(player, i) {
+    const numIter = SERVER_PERIOD_MS / SIM_STEP_TIME_MS;
 
-      player.thrustersOn = player.thrust > 0;
-      if (player.thrustersOn) {
-        physics.accelerateForward({
-          object: player,
-          acceleration: player.thrust * FULL_THRUST_ACCELERATION
-        });
-      }
+    for (let i = 0; i < numIter; i++) {
+      players.forEach(function(player, i) {
 
-      if (player.firing) {
-        const bulletElapsed = timeNow - player.timeLastBullet;
-        if (bulletElapsed > bulletDelay) {
-          fireBullet(player);
-          player.timeLastBullet = timeNow;
+        player.thrustersOn = player.thrust > 0;
+        if (player.thrustersOn) {
+          physics.accelerateForward({
+            object: player,
+            acceleration: player.thrust * FULL_THRUST_ACCELERATION
+          });
         }
-      }
-    });
 
-    // run physics every 10ms, but only send updates every 100
-    physics.tick({ state });
+        if (player.firing) {
+          const bulletElapsed = timeNow - player.timeLastBullet;
+          if (bulletElapsed > bulletDelay) {
+            fireBullet(player);
+            player.timeLastBullet = timeNow;
+          }
+        }
+      });
+
+      // run physics every 10ms, but only send updates every 100
+      physics.tick({ state });
+
+      checkBulletLifetimes();
+    }
 
     pjfServer.update(gameData);
 
-    checkBulletLifetimes();
-
-  }, SIM_PERIOD_MS);
+  }, SERVER_PERIOD_MS);
 
   function fireBullet(player) {
     const bulletBaseSpeed = 600;
