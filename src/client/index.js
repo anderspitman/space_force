@@ -30,8 +30,7 @@ fetch('config.json').then(function(response) {
 
   let firstRun = true;
 
-  //const host = config.host;
-  const host = '127.0.0.1';
+  const host = config.host;
 
   const stateService = new StateService({
     host,
