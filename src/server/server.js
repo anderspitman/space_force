@@ -1,5 +1,4 @@
 const WebSocket = require('ws');
-const { Vector2, unitVectorForAngleDegrees } = require('../common/math');
 const { PhysicsEngine } = require('../common/physics');
 const {
   shipDescriptor,
@@ -8,7 +7,7 @@ const {
   bulletDescriptor,
 } = require('../common/primitives');
 const { PojoFlowServer } = require('../../lib/pojo_flow/src/server');
-const { printObj, timeNowSeconds } = require('../common/utils');
+const { printObj, timeNowSeconds, fireBullet } = require('../common/utils');
 const { TimingStats } = require('../common/timing_stats');
 
 const KEY_RIGHT = 39;
@@ -17,7 +16,7 @@ const KEY_SPACE = 32;
 
 //const SIM_STEP_TIME_MS = 16.66667;
 const SIM_STEP_TIME_MS = 10;
-const SERVER_PERIOD_MS = 100;
+const SERVER_PERIOD_MS = 50;
 //const SERVER_PERIOD_MS = 16.6667;
 
 const physics = new PhysicsEngine({
@@ -266,7 +265,7 @@ function init() {
         if (player.firing) {
           const bulletElapsed = timeNow - player.timeLastBullet;
           if (bulletElapsed > bulletDelay) {
-            fireBullet(player);
+            fireBullet(player, bullets, bulletBounds);
             player.timeLastBullet = timeNow;
           }
         }
@@ -281,37 +280,6 @@ function init() {
     pjfServer.update(gameData);
 
   }, SERVER_PERIOD_MS);
-
-  function fireBullet(player) {
-    const bulletBaseSpeed = 600;
-    const angle =
-      player.initialRotationDegrees + player.rotationDegrees;
-    const unitVelocity = unitVectorForAngleDegrees(angle);
-    const velocity = unitVelocity.scaledBy(bulletBaseSpeed)
-      .add(player.velocity);
-
-    const newBullet = {
-      ownerId: player.id,
-      // TODO: if you accidentally use a reference here it gets mutated by
-      // the bullet code.
-      position: {
-        x: player.position.x,
-        y: player.position.y,
-      },
-      velocity: {
-        x: velocity.x,
-        y: velocity.y,
-      },
-      rotationDegrees: angle,
-      mass: 1,
-      hasGravity: false,
-      positioning: 'dynamic',
-      bounds: bulletBounds,
-      spawnTime: timeNowSeconds(),
-    };
-
-    bullets.push(newBullet);
-  }
 
   function checkBulletLifetimes() {
     const timeNow = timeNowSeconds();

@@ -1,7 +1,7 @@
 //import { Context } from 'vektar';
 // TODO: Currently expecting vektar to be available locally to speed
 // development
-import { printObj } from '../common/utils';
+import { printObj, timeNowSeconds, fireBullet } from '../common/utils';
 import { Context } from '../../lib/vektar/src/index';
 import { PojoFlowClient } from '../../lib/pojo_flow/src/client';
 //import { Game } from './game';
@@ -16,7 +16,10 @@ import { Camera } from '../camera';
 import { StateService } from './state_service';
 import { TimingStats } from '../common/timing_stats';
 
+// TODO: store these in a common location or get from server at runtime
 const SIM_STEP_TIME_MS = 10;
+const FULL_THRUST_ACCELERATION = 300.0;
+const bulletDelay = 0.1;
 
 const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
@@ -62,9 +65,11 @@ function run(gameData, stateService) {
   //const game = new Game();
 
   const physics = new PhysicsEngine({
-    sim_period_ms: SIM_STEP_TIME_MS,
+    //sim_period_ms: SIM_STEP_TIME_MS,
+    sim_period_ms: 16.66667,
   });
 
+  const bulletBounds = physics.calculateBoundingArea(bulletDescriptor);
   const frameTimeStats = new TimingStats({
     numSamples: 100,
   });
@@ -129,6 +134,14 @@ function run(gameData, stateService) {
   function step() {
 
     //frameTimeStats.addAutoPrint();
+    const timeNow = timeNowSeconds();
+
+    const state = gameData.state;
+    const playerIdMap = gameData.playerIdMap;
+    const playerId = playerIdMap[stateService.getPlayerId()];
+    const players = state[0].instances;
+    const player = players[playerId];
+    const bullets = state[2].instances;
 
     let rotation = 0.0;
     let thrust = 0.0;
@@ -136,46 +149,68 @@ function run(gameData, stateService) {
     // TODO: optimize this so it's not sending updates when nothing has changed
     if (keys[KEY_LEFT]) {
       stateService.setRotation(1.0);
+      player.rotation = 1.0;
     }
     else if (keys[KEY_RIGHT]) {
       stateService.setRotation(-1.0);
+      player.rotation = -1.0;
     }
     else {
       stateService.setRotation(0.0);
+      player.rotation = 0.0;
     }
 
     if (keys[KEY_UP]) {
       stateService.setThrust(1.0);
+      player.thrust = 1.0;
+
     }
     else {
       stateService.setThrust(0.0);
+      player.thrust = 0.0;
     }
 
     if (keys[KEY_SPACE]) {
       stateService.setFiring(true);
+      player.firing = true;
     }
     else {
       stateService.setFiring(false);
+      player.firing = false;
     }
 
     const gp = gamepads[0];
     if (gp) {
       stateService.setRotation(-gp.axes[LEFT_ANALOG_X_INDEX]);
+      player.rotation = -gp.axes[LEFT_ANALOG_X_INDEX];
       stateService.setThrust(-gp.axes[RIGHT_ANALOG_Y_INDEX]);
+      player.thrust = -gp.axes[RIGHT_ANALOG_Y_INDEX];
       stateService.setFiring(gp.buttons[5].pressed);
+      player.firing = gp.buttons[5].pressed;
     }
 
-    const state = gameData.state;
-    const playerIdMap = gameData.playerIdMap;
-    const playerShip =
-      state[0].instances[playerIdMap[stateService.getPlayerId()]];
+    player.thrustersOn = player.thrust > 0;
+    if (player.thrustersOn) {
+      physics.accelerateForward({
+        object: player,
+        acceleration: player.thrust * FULL_THRUST_ACCELERATION
+      });
+    }
 
+    // TODO: implement client-side bullet prediction
+    if (player.firing) {
+      const bulletElapsed = timeNow - player.timeLastBullet;
+      if (bulletElapsed > bulletDelay) {
+        fireBullet(player, bullets, bulletBounds);
+        player.timeLastBullet = timeNow;
+      }
+    }
 
     physics.tick({ state });
 
-    camera.setCenterPosition(playerShip.position);
+    camera.setCenterPosition(player.position);
 
-    ctx.render({ scene: gameData.state });
+    ctx.render({ scene: state });
     requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
