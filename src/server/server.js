@@ -78,7 +78,7 @@ wss.on('connection', function connection(ws, req) {
       x: Math.random() * 700,
       y: Math.random() * 700,
     },
-    health: 100,
+    health: 30,
     rotationDegrees: 0,
     rotation: 0,
     scale: 1.0,
@@ -247,7 +247,7 @@ function init() {
 
     const timeNow = timeNowSeconds();
 
-    timeStats.addAutoPrint();
+    //timeStats.addAutoPrint();
 
     const numIter = SERVER_PERIOD_MS / SIM_STEP_TIME_MS;
 
@@ -301,7 +301,7 @@ function init() {
 }
 
 function respawnPlayer(player) {
-  player.health = 100;
+  player.health = 30;
   player.position.x = Math.random() * 800;
   player.position.y = Math.random() * 800;
   player.velocity.x = 0;
