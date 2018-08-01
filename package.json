@@ -23,6 +23,7 @@
     "webpack-dev-server": "^3.1.4"
   },
   "dependencies": {
+    "deep-diff": "^1.0.1",
     "vektar": "^0.3.0",
     "wrtc": "^0.1.6",
     "ws": "^5.2.2"
